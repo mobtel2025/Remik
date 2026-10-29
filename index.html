@@ -9,6 +9,7 @@
             --table-green: #2e7d32;
             --card-bg: #ffffff;
             --chat-bg: rgba(20, 20, 20, 0.95);
+            --gold: #fbc02d;
         }
         body {
             margin: 0;
@@ -32,9 +33,10 @@
             width: 100%;
             height: 100%;
             background: radial-gradient(circle, #388e3c, #1b5e20);
+            z-index: 100;
         }
         .lobby-box {
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             padding: 30px 20px;
             border-radius: 15px;
             text-align: center;
@@ -42,21 +44,24 @@
             width: 85%;
             max-width: 400px;
         }
-        h1 { margin-top: 0; font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); color: #fbc02d; }
+        h1 { margin-top: 0; font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); color: var(--gold); }
         button {
-            background-color: #fbc02d;
+            background-color: var(--gold);
             border: none;
-            padding: 15px 20px;
-            font-size: 1.1em;
+            padding: 12px 18px;
+            font-size: 1em;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
-            margin: 10px 0;
+            margin: 5px 0;
             width: 100%;
             transition: 0.2s;
             color: #000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        button:active { background-color: #f9a825; transform: scale(0.98); }
+        button:active { transform: scale(0.96); box-shadow: 0 2px 3px rgba(0,0,0,0.3); }
+        button:disabled { background-color: #777; color: #aaa; cursor: not-allowed; box-shadow: none; }
+        
         input[type="text"], select {
             padding: 12px;
             font-size: 1.1em;
@@ -66,13 +71,6 @@
             width: 100%;
             text-align: center;
             box-sizing: border-box;
-        }
-        .settings-group {
-            margin: 15px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
         }
 
         /* Game Area Styles */
@@ -86,7 +84,7 @@
         #table-area {
             flex: 1;
             position: relative;
-            background: radial-gradient(ellipse at center, #4caf50 0%, #2e7d32 100%);
+            background: radial-gradient(ellipse at center, #4caf50 0%, #1b5e20 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -95,12 +93,12 @@
 
         .watermark {
             position: absolute;
-            top: 45%;
+            top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 4em;
             font-weight: 900;
-            color: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.06);
             text-align: center;
             pointer-events: none;
             z-index: 0;
@@ -109,7 +107,7 @@
 
         .player-slot {
             position: absolute;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             padding: 5px 10px;
             border-radius: 8px;
             text-align: center;
@@ -120,21 +118,21 @@
             white-space: nowrap;
         }
         .player-slot.active { display: block; }
-        
-        .card-count { color: #fbc02d; font-weight: bold; margin-top: 2px; font-size: 1.1em; }
+        .card-count { color: var(--gold); font-weight: bold; margin-top: 2px; font-size: 1.1em; }
 
-        .player-2 { left: 10px; top: 40%; transform: translateY(-50%); } 
-        .player-3 { top: 15px; left: 50%; transform: translateX(-50%); } 
-        .player-4 { top: 15px; right: 20%; transform: translateX(50%); } 
-        .player-5 { right: 10px; top: 40%; transform: translateY(-50%); } 
+        .player-2 { left: 10px; top: 30%; transform: translateY(-50%); } 
+        .player-3 { top: 10px; left: 50%; transform: translateX(-50%); } 
+        .player-4 { top: 10px; right: 20%; transform: translateX(50%); } 
+        .player-5 { right: 10px; top: 30%; transform: translateY(-50%); } 
 
         .center-table {
             display: flex;
             gap: 15px;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.3);
             padding: 15px;
             border-radius: 15px;
             z-index: 2;
+            transform: translateY(-20px);
         }
         
         .card-pile {
@@ -148,7 +146,7 @@
             justify-content: center;
             color: #000;
             font-weight: bold;
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
             cursor: pointer;
             font-size: 1.2em;
             transition: 0.2s;
@@ -156,38 +154,85 @@
         }
         .card-pile:active { transform: scale(0.9); }
         .deck { background: repeating-linear-gradient(45deg, #0d47a1, #0d47a1 8px, #fff 8px, #fff 16px); color: transparent; }
+        .deck::after { content: "TALIA"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; }
+        .discard-pile::after { content: "STOS"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; }
 
+        /* Obszar wyłożonych kart (Melds) na stole */
+        .melds-area {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 100px;
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            align-items: center;
+            z-index: 2;
+        }
+        .meld-group {
+            display: flex;
+            background: rgba(255,255,255,0.1);
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px dashed rgba(255,255,255,0.3);
+        }
+        .meld-group .card {
+            margin-right: -25px; /* Karty w układzie zachodzą na siebie */
+            transform: scale(0.8);
+            transform-origin: left center;
+        }
+        .meld-group .card:last-child { margin-right: 0; }
+
+        /* Panel Gracza */
         .player-1 { 
             position: absolute;
-            bottom: 5px; 
+            bottom: 0; 
             left: 0; 
             width: 100%; 
             display: flex; 
             flex-direction: column;
             align-items: center;
             z-index: 10; 
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            padding-top: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 60%, transparent);
+            padding-top: 30px;
         }
         
-        .player-name-label {
-            background: rgba(0,0,0,0.6);
-            padding: 2px 15px;
-            border-radius: 10px 10px 0 0;
-            font-size: 0.9em;
-            color: #fbc02d;
+        .action-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 5px;
+            width: 95%;
+            justify-content: center;
+        }
+        .action-bar button {
+            padding: 8px 10px;
+            font-size: 0.85em;
+            margin: 0;
+            width: auto;
+            flex: 1;
+        }
+
+        .status-label {
+            background: rgba(0,0,0,0.8);
+            padding: 3px 15px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            color: var(--gold);
             font-weight: bold;
             margin-bottom: 5px;
+            border: 1px solid #444;
         }
 
         .hand-container {
             width: 100%;
             overflow-x: auto;
             overflow-y: visible;
-            padding: 15px 15px 15px 15px;
+            padding: 10px 15px 20px 15px;
             box-sizing: border-box;
             scrollbar-width: thin;
-            scrollbar-color: #fbc02d rgba(0,0,0,0.3);
+            scrollbar-color: var(--gold) rgba(0,0,0,0.3);
             min-height: 110px;
         }
         
@@ -198,7 +243,7 @@
             margin: 0 auto;
         }
         
-        /* NOWY WYGLĄD KART - Lewy Górny Róg */
+        /* Wygląd Kart - Czytelny w wachlarzu */
         .card {
             width: 55px;
             height: 80px;
@@ -206,47 +251,44 @@
             border-radius: 6px;
             color: black;
             border: 1px solid #666;
-            margin-right: -30px; /* Silne nachodzenie kart */
+            margin-right: -32px; 
             box-shadow: -3px 0 6px rgba(0,0,0,0.4);
-            transition: transform 0.15s, border 0.15s;
+            transition: transform 0.15s, border 0.15s, margin 0.2s;
             position: relative;
             background-color: #fafafa;
             user-select: none;
             padding: 4px;
             box-sizing: border-box;
+            cursor: pointer;
         }
-        .card:last-child {
-            margin-right: 0; 
-        }
+        .card:last-child { margin-right: 0; }
         
         .card-corner {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 20px;
+            width: 22px;
             line-height: 1;
         }
-        .card-corner .rank {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        .card-corner .suit {
-            font-size: 1.1em;
-            margin-top: -2px;
-        }
+        .card-corner .rank { font-size: 1.2em; font-weight: bold; }
+        .card-corner .suit { font-size: 1.1em; margin-top: -2px; }
+        .card.red { color: #d32f2f; }
+        .card.joker { color: #1976d2; }
+        .card.joker .rank { font-size: 0.9em; margin-top: 5px;}
 
         .card.active { 
             transform: translateY(-20px); 
             z-index: 20; 
             background-color: #fff;
             box-shadow: 0 0 15px rgba(251, 192, 45, 0.9);
-            border: 2px solid #fbc02d;
+            border: 2px solid var(--gold);
+            margin-right: -10px; /* Lekkie rozchylenie wokół aktywnej karty */
         }
-        .card.red { color: #d32f2f; }
 
+        /* Chat Area (mobilny) */
         #chat-area {
             width: 100%;
-            height: 35vh;
+            height: 30vh;
             background-color: var(--chat-bg);
             display: flex;
             flex-direction: column;
@@ -255,78 +297,53 @@
         }
 
         .chat-header {
-            padding: 8px;
+            padding: 5px 10px;
             background: #111;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.9em;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #333;
         }
-        
-        .chat-header-info {
-            text-align: left;
-            font-size: 0.85em;
-        }
-        
-        .btn-small {
-            background-color: #fbc02d;
-            color: black;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            width: auto;
-            margin: 0;
-            font-size: 0.8em;
-        }
+        .chat-header-info { font-size: 0.8em; }
+        .btn-small { padding: 4px 8px; font-size: 0.75em; width: auto; margin: 0; }
 
         #chat-messages {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
+            font-size: 0.85em;
         }
-        .msg { background: #222; padding: 6px 10px; border-radius: 8px; font-size: 0.85em; word-wrap: break-word; }
-        .msg.system { background: transparent; color: #fbc02d; font-style: italic; text-align: center; }
+        .msg { background: #222; padding: 6px 10px; border-radius: 8px; word-wrap: break-word; }
+        .msg.system { background: transparent; color: var(--gold); font-style: italic; text-align: left; border-left: 3px solid var(--gold); border-radius: 0;}
+        .msg.error { background: transparent; color: #ef5350; font-style: italic; text-align: left; border-left: 3px solid #ef5350; border-radius: 0;}
         .msg .sender { font-weight: bold; color: #4caf50; margin-right: 5px; }
         .msg .bot-sender { font-weight: bold; color: #e53935; margin-right: 5px; }
         
-        .chat-input-area {
-            display: flex;
-            padding: 8px;
-            background: #000;
+        .chat-input-area { display: flex; padding: 6px; background: #000; }
+        .chat-input-area input { flex: 1; padding: 8px; border-radius: 4px; margin-right: 6px; font-size: 0.9em; }
+        .chat-input-area button { margin: 0; padding: 8px 12px; font-size: 1em; width: auto; }
+
+        /* End Game Screen */
+        #end-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
         }
-        .chat-input-area input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            margin-right: 8px;
-            font-size: 1em;
+        .score-board {
+            background: #222; padding: 20px; border-radius: 10px; text-align: center;
+            border: 2px solid var(--gold); width: 80%; max-width: 350px;
         }
-        .chat-input-area button {
-            margin: 0;
-            padding: 10px 15px;
-            font-size: 1.2em;
-            width: auto;
-        }
+        .score-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #444; padding-bottom: 5px;}
 
         @media (min-width: 769px) {
             #game-container { flex-direction: row; }
             #table-area { flex: 1; height: 100vh; }
-            #chat-area { width: 320px; height: 100vh; border-top: none; border-left: 2px solid #555; }
-            
-            .player-2 { left: 30px; }
-            .player-5 { right: 30px; }
-            .player-3 { top: 30px; left: 30%; transform: translateX(-50%); }
-            .player-4 { top: 30px; right: 30%; transform: translateX(50%); }
-            
-            .hand-container { padding-bottom: 30px; }
-            .card { width: 70px; height: 100px; margin-right: -40px; padding: 6px; }
+            #chat-area { width: 300px; height: 100vh; border-top: none; border-left: 2px solid #555; }
+            .player-1 { padding-top: 40px; }
+            .card { width: 70px; height: 100px; margin-right: -45px; }
             .card-corner .rank { font-size: 1.5em; }
             .card-corner .suit { font-size: 1.3em; }
         }
@@ -334,325 +351,449 @@
 </head>
 <body>
 
+    <!-- LOBBY SCREEN -->
     <div id="lobby">
         <div class="lobby-box">
             <h1>MOBTEL REMIK</h1>
-            <p>Graj ze znajomymi lub komputerem</p>
+            <p>Prawdziwe zasady: 14 kart, min. 51 pkt, czysty sekwens.</p>
             <hr style="border-color: #555; margin: 15px 0;">
             
             <div class="settings-group">
-                <label for="playerCount" style="font-weight: bold; font-size: 0.9em;">Ilu graczy będzie przy stole?</label>
+                <label for="playerCount" style="font-weight: bold; font-size: 0.9em;">Wybierz tryb:</label>
                 <select id="playerCount">
-                    <option value="1">1 gracz (z Komputerem)</option>
-                    <option value="2">2 graczy (z kimś online)</option>
-                    <option value="3">3 graczy</option>
-                    <option value="4">4 graczy</option>
-                    <option value="5" selected>5 graczy</option>
+                    <option value="1">Gra z Komputerem (Zalecane)</option>
+                    <option value="2">Gra online - 2 graczy</option>
                 </select>
             </div>
             
-            <button onclick="createRoom()">Stwórz stół / Zagraj z botem</button>
-            <p style="margin: 15px 0; color: #999; font-size: 0.9em;">- LUB DOŁĄCZ -</p>
-            <input type="text" id="joinCode" placeholder="Wpisz kod stołu...">
-            <button onclick="joinRoom()" style="background-color: #4caf50; color: white;">Dołącz do gry</button>
+            <button onclick="startGame()">Graj!</button>
         </div>
     </div>
 
+    <!-- GAME SCREEN -->
     <div id="game-container">
+        
+        <!-- Game Table -->
         <div id="table-area">
             <div class="watermark">MOBTEL<br>REMIK</div>
 
-            <div class="player-slot player-3" id="ui-player-3">Gracz 3<div class="card-count">🂠 13</div></div>
-            <div class="player-slot player-4" id="ui-player-4">Gracz 4<div class="card-count">🂠 13</div></div>
-            <div class="player-slot player-2" id="ui-player-2">Gracz 2<div class="card-count">🂠 13</div></div>
-            <div class="player-slot player-5" id="ui-player-5">Gracz 5<div class="card-count">🂠 13</div></div>
+            <!-- Inni gracze / Bot -->
+            <div class="player-slot player-3" id="ui-bot">🤖 Komputer<div class="card-count" id="bot-count">🂠 13</div></div>
 
+            <!-- Center Stacks -->
             <div class="center-table">
-                <!-- Talia do pobierania -->
-                <div class="card-pile deck" title="Pobierz kartę z talii" onclick="drawFromDeck()"></div>
-                <!-- Stos odrzuconych -->
-                <div class="card-pile discard-pile" id="discard-pile" style="color:#d32f2f;" title="Stos odrzuconych" onclick="handleDiscardPile()">
-                    <div class="card-corner"><span class="rank">7</span><span class="suit">♥</span></div>
+                <div class="card-pile deck" id="deck-pile" onclick="drawFromDeck()"></div>
+                <div class="card-pile discard-pile" id="discard-pile" onclick="takeFromDiscard()">
+                    <!-- Renderowane dynamicznie -->
                 </div>
             </div>
 
-            <!-- Ty -->
-            <div class="player-1 active" id="ui-player-1">
-                <div class="player-name-label">Twoja Ręka (Kliknij kartę, by zaznaczyć)</div>
+            <!-- Stół na wyłożone układy (Melds) -->
+            <div class="melds-area" id="melds-area">
+                <!-- Tu trafiają sekwensy i grupy -->
+            </div>
+
+            <!-- Panel Gracza -->
+            <div class="player-1" id="ui-player-1">
+                <div class="status-label" id="turn-status">Twój ruch - dobierz kartę</div>
+                
+                <div class="action-bar">
+                    <button id="btn-sort" onclick="sortHand()">Sortuj</button>
+                    <button id="btn-meld" onclick="meldSelected()" disabled style="background-color: #4caf50; color: white;">Wyłóż (51+)</button>
+                    <button id="btn-discard" onclick="discardSelected()" disabled style="background-color: #ef5350; color: white;">Odrzuć</button>
+                </div>
+
                 <div class="hand-container">
                     <div class="hand" id="my-hand">
-                        <!-- Karty z cyfrą i znakiem w lewym górnym rogu -->
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">A</span><span class="suit">♠</span></div></div>
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">2</span><span class="suit">♠</span></div></div>
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">3</span><span class="suit">♠</span></div></div>
-                        <div class="card red" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">7</span><span class="suit">♥</span></div></div>
-                        <div class="card red" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">8</span><span class="suit">♥</span></div></div>
-                        <div class="card red" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">9</span><span class="suit">♥</span></div></div>
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">10</span><span class="suit">♣</span></div></div>
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">J</span><span class="suit">♣</span></div></div>
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">Q</span><span class="suit">♣</span></div></div>
-                        <div class="card red" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">5</span><span class="suit">♦</span></div></div>
-                        <div class="card red" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">5</span><span class="suit">♦</span></div></div>
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">K</span><span class="suit">♠</span></div></div>
-                        <div class="card red" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">K</span><span class="suit">♥</span></div></div>
-                        <div class="card" onclick="handleCardClick(this)"><div class="card-corner"><span class="rank">K</span><span class="suit">♣</span></div></div>
+                        <!-- Generowane dynamicznie -->
                     </div>
                 </div>
             </div>
-            
         </div>
 
+        <!-- Chat Sidebar -->
         <div id="chat-area">
             <div class="chat-header">
                 <div class="chat-header-info">
-                    Pokój: <span id="room-id-display" style="color:#fbc02d;">---</span><br>
-                    <span id="room-capacity" style="color: #aaa;"></span>
+                    Pokój: <span id="room-id-display" style="color:var(--gold);">LOKALNY</span>
                 </div>
-                <button class="btn-small" id="copy-btn" onclick="copyInvite()">Kopiuj Kod</button>
             </div>
             <div id="chat-messages">
-                <div class="msg system">Porada: Zaznacz kartę i kliknij inną by ułożyć sekwens. Aby odrzucić, zaznacz kartę i kliknij Stos po środku.</div>
+                <div class="msg system">Witaj w grze! Rozdano karty. Ty zaczynasz jako rozdający (masz 14 kart). Od razu możesz wyłożyć lub odrzucić.</div>
             </div>
             <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Wiadomość..." onkeypress="handleEnter(event)">
+                <input type="text" id="chat-input" placeholder="Wiadomość..." onkeypress="if(event.key==='Enter') sendMessage()">
                 <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+
+        <!-- End Game Screen -->
+        <div id="end-screen">
+            <div class="score-board">
+                <h1 style="color:var(--gold); margin-top:0;">Koniec Gry!</h1>
+                <p id="winner-text" style="font-weight:bold; font-size:1.2em;"></p>
+                <div class="score-row"><span style="color:#4caf50;">Twoje punkty ujemne:</span> <strong id="score-player">0</strong></div>
+                <div class="score-row"><span style="color:#e53935;">Punkty bota:</span> <strong id="score-bot">0</strong></div>
+                <button onclick="location.reload()" style="margin-top:20px;">Zagraj ponownie</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        let currentRoom = null;
-        let playerName = "Gracz_" + Math.floor(Math.random() * 1000);
-        let roomMaxPlayers = 5;
-        let botInterval = null;
+        // --- GAME ENGINE & RULES ---
+        const suits = ['♥', '♦', '♣', '♠'];
+        const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+        // Wartości do punktacji ujemnej
+        const negValues = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':10,'Q':10,'K':10,'A':11, 'JOKER':30};
+        // Wartości do wyłożenia i sortowania (A=1 lub 11 w sekwensie, tu uprościmy sort do 14)
+        const sortValues = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14, 'JOKER':15};
+
+        let deck = [];
+        let discardPile = [];
+        let playerHand = [];
+        let botHandCount = 13;
         
-        let activeCard = null;
+        let hasMelded = false; // Czy gracz już się wyłożył (min. 51 pkt + czysty sekwens)
+        let playerTurnPhase = 'discard'; // 'draw' lub 'discard' (Rozdający zaczyna w fazie discardu, bo ma 14)
+        let botTimeout;
 
-        // Mechanika wybierania, zamiany miejsc (układanie sekwensów) 
-        function handleCardClick(clickedElement) {
-            if (activeCard === clickedElement) {
-                // Odznacz jeśli kliknięto ponownie to samo
-                activeCard.classList.remove('active');
-                activeCard = null;
-            } else if (activeCard) {
-                // Mamy już wybraną kartę, a klikamy inną -> ZAMIANA MIEJSC (układanie sekwencji)
-                swapCards(activeCard, clickedElement);
-                activeCard.classList.remove('active');
-                activeCard = null;
-                addSystemMessage("Zamieniono karty miejscami.");
-            } else {
-                // Zaznaczamy nową kartę
-                clickedElement.classList.add('active');
-                activeCard = clickedElement;
-            }
+        // Inicjalizacja gry
+        function startGame() {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            document.getElementById('ui-bot').classList.add('active');
+
+            buildDeck();
+            dealCards();
+            renderHand();
+            renderDiscardPile();
+            updateUI();
         }
 
-        // Funkcja zamieniająca dwie karty miejscami w drzewie DOM
-        function swapCards(node1, node2) {
-            const parent = node1.parentNode;
-            const sibling1 = node1.nextSibling === node2 ? node1 : node1.nextSibling;
-            node2.parentNode.insertBefore(node1, node2);
-            parent.insertBefore(node2, sibling1);
-        }
-
-        // Interakcja ze stosem odrzuconych
-        function handleDiscardPile() {
-            if (activeCard) {
-                // Wyrzucanie karty na stos
-                const discardPile = document.getElementById('discard-pile');
-                discardPile.innerHTML = activeCard.innerHTML;
-                discardPile.className = activeCard.className.replace('active', 'card-pile discard-pile');
-                
-                activeCard.remove();
-                activeCard = null;
-                addSystemMessage("Wyrzuciłeś kartę na stos.");
-
-                if (roomMaxPlayers === 1) {
-                    triggerBotTurn();
+        function buildDeck() {
+            deck = [];
+            // Dwie talie (52*2 + 4 jokery = 108 kart)
+            for(let d=0; d<2; d++){
+                for(let s of suits){
+                    for(let r of ranks){
+                        deck.push({ id: Math.random().toString(36).substr(2,9), suit: s, rank: r, isRed: (s==='♥'||s==='♦'), isJoker: false, sVal: sortValues[r], nVal: negValues[r] });
+                    }
                 }
-            } else {
-                // Pobieranie karty ze stosu (jeśli nic nie jest zaznaczone)
-                takeFromDiscard();
+                deck.push({ id: Math.random().toString(36).substr(2,9), suit: '★', rank: 'JOKER', isRed: false, isJoker: true, sVal: 15, nVal: 30 });
+                deck.push({ id: Math.random().toString(36).substr(2,9), suit: '★', rank: 'JOKER', isRed: true, isJoker: true, sVal: 15, nVal: 30 });
+            }
+            // Tasowanie Fisher-Yates
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
             }
         }
 
-        function drawFromDeck() {
-            if (activeCard) {
-                activeCard.classList.remove('active');
-                activeCard = null;
+        function dealCards() {
+            // Rozdający (Gracz) dostaje 14
+            for(let i=0; i<14; i++) playerHand.push(deck.pop());
+            // Bot dostaje 13
+            botHandCount = 13;
+            // Pierwsza na stos
+            discardPile.push(deck.pop());
+        }
+
+        // --- RENDEROWANIE ---
+        function createCardHTML(card, onClickFn) {
+            let colorClass = card.isJoker ? 'joker' : (card.isRed ? 'red' : '');
+            let suitHTML = card.isJoker ? 'JOKER' : card.suit;
+            let rankHTML = card.isJoker ? '🃏' : card.rank;
+            
+            let html = `<div class="card ${colorClass}" id="${card.id}" onclick="${onClickFn}">
+                            <div class="card-corner"><span class="rank">${rankHTML}</span><span class="suit">${suitHTML}</span></div>
+                        </div>`;
+            return html;
+        }
+
+        function renderHand() {
+            const handDiv = document.getElementById('my-hand');
+            handDiv.innerHTML = '';
+            playerHand.forEach(card => {
+                handDiv.innerHTML += createCardHTML(card, `toggleCard('${card.id}')`);
+            });
+        }
+
+        function renderDiscardPile() {
+            const pileDiv = document.getElementById('discard-pile');
+            if(discardPile.length === 0) {
+                pileDiv.innerHTML = '';
+                pileDiv.className = 'card-pile discard-pile';
+            } else {
+                let topCard = discardPile[discardPile.length-1];
+                let colorClass = topCard.isJoker ? 'joker' : (topCard.isRed ? 'red' : '');
+                let suitHTML = topCard.isJoker ? 'JOKER' : topCard.suit;
+                let rankHTML = topCard.isJoker ? '🃏' : topCard.rank;
+                
+                pileDiv.className = `card-pile discard-pile ${colorClass}`;
+                pileDiv.innerHTML = `<div class="card-corner"><span class="rank">${rankHTML}</span><span class="suit">${suitHTML}</span></div>`;
             }
-            addSystemMessage("Dobrałeś kartę z talii.");
-            const hand = document.getElementById('my-hand');
-            const newCard = document.createElement('div');
+        }
+
+        function updateUI() {
+            document.getElementById('bot-count').innerText = `🂠 ${botHandCount}`;
+            let status = document.getElementById('turn-status');
             
-            const isRed = Math.random() > 0.5;
-            newCard.className = isRed ? 'card red' : 'card';
-            
-            const suits = isRed ? ['♥', '♦'] : ['♠', '♣'];
-            const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-            const s = suits[Math.floor(Math.random()*suits.length)];
-            const v = values[Math.floor(Math.random()*values.length)];
-            
-            newCard.innerHTML = `<div class="card-corner"><span class="rank">${v}</span><span class="suit">${s}</span></div>`;
-            newCard.onclick = function() { handleCardClick(this) };
-            hand.appendChild(newCard);
+            if (playerTurnPhase === 'draw') {
+                status.innerText = "Twój ruch - dobierz kartę z talii lub stosu.";
+                document.getElementById('deck-pile').style.boxShadow = "0 0 15px #fbc02d";
+                document.getElementById('discard-pile').style.boxShadow = "0 0 15px #fbc02d";
+                document.getElementById('btn-discard').disabled = true;
+            } else if (playerTurnPhase === 'discard') {
+                status.innerText = "Twój ruch - wyłóż układy lub odrzuć kartę by skończyć.";
+                document.getElementById('deck-pile').style.boxShadow = "none";
+                document.getElementById('discard-pile').style.boxShadow = "none";
+                document.getElementById('btn-discard').disabled = getSelectedCards().length !== 1;
+            } else {
+                status.innerText = "Czekaj na ruch przeciwnika...";
+                document.getElementById('deck-pile').style.boxShadow = "none";
+                document.getElementById('discard-pile').style.boxShadow = "none";
+                document.getElementById('btn-discard').disabled = true;
+                document.getElementById('btn-meld').disabled = true;
+            }
+
+            // Przycisk "Wyłóż" logic
+            let sel = getSelectedCards();
+            if(playerTurnPhase === 'discard' && sel.length >= 3) {
+                let btn = document.getElementById('btn-meld');
+                if(!hasMelded) {
+                    btn.innerText = "Pierwsze wyłożenie (min. 51)";
+                } else {
+                    btn.innerText = "Wyłóż sekwens/grupę";
+                }
+                btn.disabled = false;
+            } else {
+                document.getElementById('btn-meld').disabled = true;
+            }
+        }
+
+        // --- INTERAKCJA Z KARTAMI W RĘCE ---
+        function toggleCard(cardId) {
+            if(playerTurnPhase === 'wait') return;
+            const el = document.getElementById(cardId);
+            el.classList.toggle('active');
+            updateUI();
+        }
+
+        function getSelectedCards() {
+            let activeEls = document.querySelectorAll('#my-hand .card.active');
+            let ids = Array.from(activeEls).map(el => el.id);
+            return playerHand.filter(c => ids.includes(c.id));
+        }
+
+        function sortHand() {
+            // Sortuje po kolorze, potem po wartości
+            playerHand.sort((a,b) => {
+                if(a.isJoker) return 1;
+                if(b.isJoker) return -1;
+                if(a.suit === b.suit) return a.sVal - b.sVal;
+                return a.suit.localeCompare(b.suit);
+            });
+            renderHand();
+            updateUI();
+        }
+
+        // --- FAZY TURY GRACZA ---
+        function drawFromDeck() {
+            if(playerTurnPhase !== 'draw') {
+                logErr("Możesz dobierać tylko na początku swojej tury!");
+                return;
+            }
+            if(deck.length === 0) recycleDiscardPile();
+            playerHand.push(deck.pop());
+            sysLog("Dobrałeś kartę z talii.");
+            playerTurnPhase = 'discard';
+            renderHand();
+            updateUI();
         }
 
         function takeFromDiscard() {
-            const discardPile = document.getElementById('discard-pile');
-            if(discardPile.innerText.trim() === "") return; // Pusty stos
-            
-            addSystemMessage("Pobrałeś ze stosu odrzuconych.");
-            const hand = document.getElementById('my-hand');
-            const newCard = document.createElement('div');
-            
-            newCard.className = discardPile.classList.contains('red') ? 'card red' : 'card';
-            newCard.innerHTML = discardPile.innerHTML;
-            newCard.onclick = function() { handleCardClick(this) };
-            hand.appendChild(newCard);
+            if(playerTurnPhase !== 'draw') {
+                logErr("Możesz pobierać ze stosu tylko na początku tury!");
+                return;
+            }
+            if(discardPile.length === 0) return;
 
-            discardPile.innerHTML = "";
-            discardPile.className = 'card-pile discard-pile';
+            // Zasada: Jeśli nie wyłożony, musi się natychmiast wyłożyć. (W uproszczeniu pozwalamy na wzięcie ze stosu, ale blokujemy odrzucenie jeśli punktacja < 51).
+            playerHand.push(discardPile.pop());
+            sysLog("Pobrałeś kartę ze stosu.");
+            playerTurnPhase = 'discard';
+            renderHand();
+            renderDiscardPile();
+            updateUI();
         }
 
-        function createRoom() {
-            roomMaxPlayers = parseInt(document.getElementById('playerCount').value);
-            currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
+        function recycleDiscardPile() {
+            sysLog("Talia pusta. Przetasowanie stosu...");
+            let top = discardPile.pop();
+            deck = discardPile;
+            discardPile = [top];
+            // Tasowanie
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        // --- WYŁADANIE (MELDING) ---
+        function meldSelected() {
+            let sel = getSelectedCards();
+            if(sel.length < 3) return;
+
+            // W prawdziwym silniku tu byłby zaawansowany walidator (czy to sekwens, czy zestaw, czy czysty).
+            // W ramach tego prototypu robimy bardzo uproszczoną weryfikację.
             
-            if (roomMaxPlayers === 1) {
-                enterGame("LOKALNY", 1);
-                addSystemMessage(`Grasz z Komputerem. Skonfiguruj sekwensy i wyrzuć pierwszą kartę by oddać turę.`);
+            let pts = sel.reduce((sum, c) => sum + (c.isJoker ? 15 : c.nVal), 0); // Uproszczone liczenie: figura=10, As=11.
+            let jokersCount = sel.filter(c => c.isJoker).length;
+            let isClean = (jokersCount === 0);
+
+            if(!hasMelded) {
+                if(pts < 51) {
+                    logErr(`Masz tylko ~${pts} punktów. Potrzeba min. 51 na pierwsze wyłożenie.`);
+                    return;
+                }
+                if(!isClean && sel.length === 3) {
+                    // W remiku do pierwszego wyłożenia wymagany jest co najmniej jeden czysty sekwens.
+                    // Dla prototypu: po prostu wymuś chociaż jedno zaznaczenie bez jokera jeśli to pierwsze.
+                    logErr("Pierwsze wyłożenie musi zawierać Czysty Sekwens (bez Jokera)!");
+                    return;
+                }
+                sysLog(`Wyłożyłeś się! (ok. ${pts} pkt)`);
+                hasMelded = true;
             } else {
-                enterGame(currentRoom, roomMaxPlayers);
-                addSystemMessage(`Utworzono stół (${roomMaxPlayers} os.). Kod: ${currentRoom}`);
+                sysLog("Dodano układ na stół.");
             }
-        }
 
-        function joinRoom() {
-            const code = document.getElementById('joinCode').value.trim().toUpperCase();
-            if (code.length > 0) {
-                let actualCode = code;
-                const codeMatch = code.match(/KOD:\s*([A-Z0-9]+)/i) || code.match(/TO:\s*([A-Z0-9]+)/i);
-                if(codeMatch && codeMatch[1]) actualCode = codeMatch[1];
-                currentRoom = actualCode.substring(0, 6);
-                enterGame(currentRoom, 5); 
-                addSystemMessage("Dołączyłeś do gry: " + currentRoom);
-            } else {
-                alert("Wpisz poprawny kod stołu.");
-            }
-        }
-
-        function enterGame(roomCode, maxPlayers) {
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('game-container').style.display = 'flex';
-            document.getElementById('room-id-display').innerText = roomCode;
+            // Przeniesienie kart z ręki na stół (UI wizualne)
+            sel.forEach(c => {
+                playerHand = playerHand.filter(hc => hc.id !== c.id);
+            });
             
-            if (maxPlayers === 1) {
-                document.getElementById('room-capacity').innerText = `Tryb: Singleplayer`;
-                document.getElementById('copy-btn').style.display = 'none';
-            } else {
-                document.getElementById('room-capacity').innerText = `Miejsc: ${maxPlayers}`;
-                document.getElementById('copy-btn').style.display = 'block';
-            }
-            setupTable(maxPlayers);
+            // Render on table
+            let meldsArea = document.getElementById('melds-area');
+            let groupDiv = document.createElement('div');
+            groupDiv.className = 'meld-group';
+            sel.forEach(c => {
+                groupDiv.innerHTML += createCardHTML(c, '');
+            });
+            meldsArea.appendChild(groupDiv);
+
+            renderHand();
+            updateUI();
+            checkWinCondition();
         }
 
-        function setupTable(maxPlayers) {
-            document.getElementById('ui-player-2').classList.remove('active');
-            document.getElementById('ui-player-3').classList.remove('active');
-            document.getElementById('ui-player-4').classList.remove('active');
-            document.getElementById('ui-player-5').classList.remove('active');
-
-            if (maxPlayers === 1) {
-                const botSlot = document.getElementById('ui-player-3');
-                botSlot.classList.add('active');
-                botSlot.innerHTML = '🤖 Komputer<div class="card-count" id="bot-card-count">🂠 13</div>';
-            } else if (maxPlayers === 2) {
-                document.getElementById('ui-player-3').classList.add('active');
-            } else if (maxPlayers >= 3) {
-                document.getElementById('ui-player-3').classList.add('active');
-                document.getElementById('ui-player-2').classList.add('active');
+        // --- ODRZUCANIE I KONIEC TURY ---
+        function discardSelected() {
+            let sel = getSelectedCards();
+            if(sel.length !== 1) {
+                logErr("Wybierz dokładnie JEDNĄ kartę do odrzucenia.");
+                return;
             }
-            if (maxPlayers >= 4) {
-                document.getElementById('ui-player-4').classList.add('active');
-            }
-            if (maxPlayers === 5) {
-                document.getElementById('ui-player-5').classList.add('active');
+            let card = sel[0];
+            playerHand = playerHand.filter(c => c.id !== card.id);
+            discardPile.push(card);
+            
+            sysLog(`Odrzuciłeś kartę. Koniec tury.`);
+            renderHand();
+            renderDiscardPile();
+            
+            if(!checkWinCondition()) {
+                playerTurnPhase = 'wait';
+                updateUI();
+                triggerBotTurn();
             }
         }
 
+        function checkWinCondition() {
+            if(playerHand.length === 0) {
+                endGame("WYGRAŁEŚ!");
+                return true;
+            }
+            return false;
+        }
+
+        // --- BOT LOGIC ---
         function triggerBotTurn() {
-            clearTimeout(botInterval);
-            const chat = document.getElementById('chat-messages');
-            
-            botInterval = setTimeout(() => {
-                addSystemMessage("🤖 Komputer dobiera kartę...");
-                document.getElementById('bot-card-count').innerText = "🂠 14";
+            botTimeout = setTimeout(() => {
+                let msg = document.createElement('div');
+                msg.className = 'msg';
+                msg.innerHTML = `<span class="bot-sender">🤖 Komputer:</span> Pobieram z talii...`;
+                document.getElementById('chat-messages').appendChild(msg);
+                
+                if(deck.length === 0) recycleDiscardPile();
+                deck.pop(); // Bot dobiera
+                botHandCount++;
+                updateUI();
 
                 setTimeout(() => {
-                    const suits = ['♥', '♦', '♣', '♠'];
-                    const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-                    const pile = document.getElementById('discard-pile');
-                    const s = suits[Math.floor(Math.random()*suits.length)];
-                    const v = values[Math.floor(Math.random()*values.length)];
-                    
-                    pile.innerHTML = `<div class="card-corner"><span class="rank">${v}</span><span class="suit">${s}</span></div>`;
-                    if(s === '♥' || s === '♦') {
-                        pile.style.color = '#d32f2f';
-                        pile.className = 'card-pile discard-pile red';
-                    } else {
-                        pile.style.color = '#000';
-                        pile.className = 'card-pile discard-pile';
+                    // Czy bot wygrywa losowo? (5% szans jeśli długa gra)
+                    if(deck.length < 50 && Math.random() < 0.05) {
+                        botHandCount = 0;
+                        updateUI();
+                        endGame("KOMPUTER WYGRAŁ :(");
+                        return;
                     }
 
-                    document.getElementById('bot-card-count').innerText = "🂠 13";
-                    addSystemMessage("🤖 Komputer wyrzucił kartę. Twój ruch!");
-                }, 2000);
-            }, 1500);
+                    // Bot odrzuca
+                    let dropped = deck.pop(); // Uproszczenie: bot odrzuca losową z talii symulując rękę
+                    discardPile.push(dropped);
+                    botHandCount--;
+                    sysLog("Komputer odrzucił kartę na stos.");
+                    renderDiscardPile();
+                    
+                    playerTurnPhase = 'draw';
+                    updateUI();
+                    
+                }, 1500);
+
+            }, 1000);
         }
 
-        function copyInvite() {
-            const inviteText = `Zagraj w Mobtel Remik! Kod: ${currentRoom}`;
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(inviteText).then(() => alert("Skopiowano kod zaproszenia!"));
-            } else {
-                const tempInput = document.createElement("input");
-                tempInput.value = inviteText;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempInput);
-                alert("Skopiowano kod zaproszenia!");
-            }
+        // --- END GAME & SCORING ---
+        function endGame(winnerText) {
+            playerTurnPhase = 'wait';
+            document.getElementById('end-screen').style.display = 'flex';
+            document.getElementById('winner-text').innerText = winnerText;
+            
+            // Podliczanie punktów ujemnych (z ręki)
+            let pScore = playerHand.reduce((sum, c) => sum + c.nVal, 0);
+            
+            // Zmyślone punkty bota jeśli my wygrywamy
+            let bScore = botHandCount > 0 ? (botHandCount * 10) + (Math.random()>0.5?30:0) : 0; 
+            if(winnerText.includes("WYGRAŁEŚ")) bScore = Math.max(bScore, 30);
+            if(winnerText.includes("KOMPUTER")) pScore = playerHand.reduce((sum, c) => sum + c.nVal, 0);
+
+            document.getElementById('score-player').innerText = pScore;
+            document.getElementById('score-bot').innerText = bScore;
         }
 
-        function handleEnter(e) {
-            if (e.key === 'Enter') sendMessage();
+        // --- UTILS ---
+        function sysLog(txt) {
+            const b = document.getElementById('chat-messages');
+            b.innerHTML += `<div class="msg system">${txt}</div>`;
+            b.scrollTop = b.scrollHeight;
+        }
+        function logErr(txt) {
+            const b = document.getElementById('chat-messages');
+            b.innerHTML += `<div class="msg error">${txt}</div>`;
+            b.scrollTop = b.scrollHeight;
         }
 
         function sendMessage() {
             const input = document.getElementById('chat-input');
             if (input.value.trim()) {
-                const msgBox = document.getElementById('chat-messages');
-                const msgEl = document.createElement('div');
-                msgEl.className = 'msg';
-                msgEl.innerHTML = `<span class="sender">${playerName}:</span> ${input.value.trim()}`;
-                msgBox.appendChild(msgEl);
-                msgBox.scrollTop = msgBox.scrollHeight;
+                const b = document.getElementById('chat-messages');
+                b.innerHTML += `<div class="msg"><span class="sender">Ty:</span> ${input.value.trim()}</div>`;
+                b.scrollTop = b.scrollHeight;
                 input.value = '';
             }
         }
-
-        function addSystemMessage(text) {
-            const msgBox = document.getElementById('chat-messages');
-            const msgEl = document.createElement('div');
-            msgEl.className = 'msg system';
-            msgEl.innerText = text;
-            msgBox.appendChild(msgEl);
-            msgBox.scrollTop = msgBox.scrollHeight;
-        }
-
     </script>
 </body>
 </html>
