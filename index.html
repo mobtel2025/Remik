@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remik Online - 5 Graczy</title>
+    <style>
+        :root {
+            --table-green: #2e7d32;
+            --card-bg: #ffffff;
+            --chat-bg: rgba(20, 20, 20, 0.9);
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--table-green);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Lobby Styles */
+        #lobby {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #388e3c, #1b5e20);
+        }
+        .lobby-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 { margin-top: 0; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        button {
+            background-color: #fbc02d;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: 0.2s;
+            color: #000;
+        }
+        button:hover { background-color: #f9a825; transform: scale(1.05); }
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1.1em;
+            border-radius: 6px;
+            border: none;
+            margin: 10px 0;
+            width: 80%;
+            text-align: center;
+        }
+
+        /* Game Area Styles */
+        #game-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: row;
+        }
+        
+        #table-area {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(ellipse at center, #4caf50 0%, #2e7d32 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Player Positions (Up to 5 players) */
+        .player-slot {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .player-1 { bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; } /* You */
+        .player-2 { left: 20px; top: 50%; transform: translateY(-50%); } /* Left */
+        .player-3 { top: 20px; left: 30%; transform: translateX(-50%); } /* Top Left */
+        .player-4 { top: 20px; right: 30%; transform: translateX(50%); } /* Top Right */
+        .player-5 { right: 20px; top: 50%; transform: translateY(-50%); } /* Right */
+
+        .center-table {
+            display: flex;
+            gap: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+        }
+        
+        .card-pile {
+            width: 80px;
+            height: 120px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .deck { background: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 10px, #fff 10px, #fff 20px); color: transparent; }
+
+        /* Chat Area */
+        #chat-area {
+            width: 350px;
+            background-color: var(--chat-bg);
+            display: flex;
+            flex-direction: column;
+            border-left: 2px solid #555;
+        }
+        .chat-header {
+            padding: 15px;
+            background: #111;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+        }
+        #chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .msg { background: #333; padding: 8px 12px; border-radius: 8px; font-size: 0.9em; word-wrap: break-word; }
+        .msg.system { background: transparent; color: #fbc02d; font-style: italic; text-align: center; }
+        .msg .sender { font-weight: bold; color: #4caf50; margin-right: 5px; }
+        
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            background: #000;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .chat-input-area button {
+            margin: 0;
+            padding: 10px 15px;
+            font-size: 1em;
+        }
+
+        /* Hand representation */
+        .hand {
+            display: flex;
+            justify-content: center;
+            gap: -40px;
+            margin-top: 10px;
+        }
+        .card {
+            width: 60px;
+            height: 90px;
+            background: white;
+            border-radius: 5px;
+            color: black;
+            border: 1px solid #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            margin-left: -20px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            transition: 0.2s;
+        }
+        .card:hover { transform: translateY(-10px); z-index: 10; }
+        .card.red { color: red; }
+    </style>
+</head>
+<body>
+
+    <!-- LOBBY SCREEN -->
+    <div id="lobby">
+        <div class="lobby-box">
+            <h1>Remik Online</h1>
+            <p>Graj ze znajomymi (max 5 graczy)</p>
+            <hr style="border-color: #555; margin: 20px 0;">
+            
+            <button onclick="createRoom()">Stwórz nowy stół</button>
+            <p>LUB</p>
+            <input type="text" id="joinCode" placeholder="Wpisz kod stołu...">
+            <br>
+            <button onclick="joinRoom()" style="background-color: #4caf50; color: white;">Dołącz do gry</button>
+        </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-container">
+        
+        <!-- Game Table -->
+        <div id="table-area">
+            
+            <div class="player-slot player-3">
+                Gracz 3
+                <div class="hand">🂠 🂠 🂠</div>
+            </div>
+            <div class="player-slot player-4">
+                Gracz 4
+                <div class="hand">🂠 🂠 🂠</div>
+            </div>
+            <div class="player-slot player-2">
+                Gracz 2
+                <div class="hand">🂠<br>🂠</div>
+            </div>
+            <div class="player-slot player-5">
+                Gracz 5
+                <div class="hand">🂠<br>🂠</div>
+            </div>
+
+            <div class="center-table">
+                <div class="card-pile deck" title="Pobierz kartę">Talia</div>
+                <div class="card-pile discard-pile" style="color:red;" title="Stos odrzuconych">♥ 7</div>
+            </div>
+
+            <!-- Current Player (You) -->
+            <div class="player-slot player-1">
+                Ty (Twoje karty)
+                <div class="hand" id="my-hand">
+                    <div class="card">♠ A</div>
+                    <div class="card red">♥ K</div>
+                    <div class="card">♣ 10</div>
+                    <div class="card red">♦ 5</div>
+                    <div class="card">♠ 2</div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Chat Sidebar -->
+        <div id="chat-area">
+            <div class="chat-header">
+                Pokój: <span id="room-id-display">---</span>
+                <br>
+                <button onclick="copyInvite()" style="padding: 5px 10px; font-size: 0.8em; margin-top: 5px;">Kopiuj zaproszenie</button>
+            </div>
+            <div id="chat-messages">
+                <div class="msg system">Witaj w pokoju! Poczekaj na innych graczy.</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Napisz wiadomość..." onkeypress="handleEnter(event)">
+                <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentRoom = null;
+        let playerName = "Gracz_" + Math.floor(Math.random() * 1000);
+
+        function createRoom() {
+            // Generate a random 6-character room code
+            currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
+            enterGame(currentRoom);
+            addSystemMessage("Stworzyłeś stół! Twój kod to: " + currentRoom);
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('joinCode').value.trim().toUpperCase();
+            if (code.length > 0) {
+                currentRoom = code;
+                enterGame(currentRoom);
+                addSystemMessage("Dołączyłeś do stołu: " + currentRoom);
+            } else {
+                alert("Proszę wpisać poprawny kod stołu.");
+            }
+        }
+
+        function enterGame(roomCode) {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            document.getElementById('room-id-display').innerText = roomCode;
+            
+            // Here you would initialize your WebSocket or Firebase Realtime Database connection.
+            // Example: db.ref('rooms/' + roomCode).on('value', syncGameState);
+        }
+
+        function copyInvite() {
+            const inviteText = "Cześć! Zagrajmy w Remika. Mój kod stołu to: " + currentRoom;
+            navigator.clipboard.writeText(inviteText).then(() => {
+                alert("Skopiowano zaproszenie do schowka!");
+            });
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (text) {
+                // Locally display the message
+                const msgBox = document.getElementById('chat-messages');
+                const msgEl = document.createElement('div');
+                msgEl.className = 'msg';
+                msgEl.innerHTML = `<span class="sender">${playerName}:</span> ${text}`;
+                msgBox.appendChild(msgEl);
+                msgBox.scrollTop = msgBox.scrollHeight;
+                
+                input.value = '';
+
+                // TODO: Send this message to the backend (WebSocket/Firebase) to broadcast to other 4 players
+            }
+        }
+
+        function addSystemMessage(text) {
+            const msgBox = document.getElementById('chat-messages');
+            const msgEl = document.createElement('div');
+            msgEl.className = 'msg system';
+            msgEl.innerText = text;
+            msgBox.appendChild(msgEl);
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        // --- Mock Game Interactivity ---
+        document.querySelector('.deck').addEventListener('click', () => {
+            alert('W prawdziwej grze pociągniesz tutaj kartę z talii.');
+            // Logic for drawing a card goes here
+        });
+
+    </script>
+</body>
+</html>
+
