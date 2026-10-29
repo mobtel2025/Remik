@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remik Online - 5 Graczy</title>
+    <title>Remik Online</title>
     <style>
         :root {
             --table-green: #2e7d32;
@@ -37,6 +37,7 @@
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 300px;
         }
         h1 { margin-top: 0; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         button {
@@ -52,7 +53,7 @@
             color: #000;
         }
         button:hover { background-color: #f9a825; transform: scale(1.05); }
-        input[type="text"] {
+        input[type="text"], select {
             padding: 12px;
             font-size: 1.1em;
             border-radius: 6px;
@@ -60,6 +61,14 @@
             margin: 10px 0;
             width: 80%;
             text-align: center;
+            box-sizing: border-box;
+        }
+        .settings-group {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
         }
 
         /* Game Area Styles */
@@ -87,12 +96,15 @@
             border-radius: 10px;
             text-align: center;
             border: 2px solid rgba(255,255,255,0.2);
+            display: none; /* Ukryte domyślnie, pokażemy w zależności od liczby graczy */
         }
-        .player-1 { bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; } /* You */
-        .player-2 { left: 20px; top: 50%; transform: translateY(-50%); } /* Left */
-        .player-3 { top: 20px; left: 30%; transform: translateX(-50%); } /* Top Left */
-        .player-4 { top: 20px; right: 30%; transform: translateX(50%); } /* Top Right */
-        .player-5 { right: 20px; top: 50%; transform: translateY(-50%); } /* Right */
+        .player-slot.active { display: block; }
+
+        .player-1 { bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: block; } /* Ty zawsze widoczny */
+        .player-2 { left: 20px; top: 50%; transform: translateY(-50%); } 
+        .player-3 { top: 20px; left: 30%; transform: translateX(-50%); } 
+        .player-4 { top: 20px; right: 30%; transform: translateX(50%); } 
+        .player-5 { right: 20px; top: 50%; transform: translateY(-50%); } 
 
         .center-table {
             display: flex;
@@ -195,11 +207,23 @@
     <div id="lobby">
         <div class="lobby-box">
             <h1>Remik Online</h1>
-            <p>Graj ze znajomymi (max 5 graczy)</p>
+            <p>Graj ze znajomymi (od 2 do 5 graczy)</p>
             <hr style="border-color: #555; margin: 20px 0;">
             
+            <div class="settings-group">
+                <label for="playerCount" style="font-weight: bold;">Ilu graczy będzie przy stole?</label>
+                <select id="playerCount">
+                    <option value="2">2 graczy</option>
+                    <option value="3">3 graczy</option>
+                    <option value="4">4 graczy</option>
+                    <option value="5" selected>5 graczy</option>
+                </select>
+            </div>
+            
             <button onclick="createRoom()">Stwórz nowy stół</button>
-            <p>LUB</p>
+            
+            <p style="margin: 20px 0; color: #ccc;">LUB</p>
+            
             <input type="text" id="joinCode" placeholder="Wpisz kod stołu...">
             <br>
             <button onclick="joinRoom()" style="background-color: #4caf50; color: white;">Dołącz do gry</button>
@@ -212,31 +236,20 @@
         <!-- Game Table -->
         <div id="table-area">
             
-            <div class="player-slot player-3">
-                Gracz 3
-                <div class="hand">🂠 🂠 🂠</div>
-            </div>
-            <div class="player-slot player-4">
-                Gracz 4
-                <div class="hand">🂠 🂠 🂠</div>
-            </div>
-            <div class="player-slot player-2">
-                Gracz 2
-                <div class="hand">🂠<br>🂠</div>
-            </div>
-            <div class="player-slot player-5">
-                Gracz 5
-                <div class="hand">🂠<br>🂠</div>
-            </div>
+            <!-- Inni gracze -->
+            <div class="player-slot player-3" id="ui-player-3">Gracz z góry<div class="hand">🂠 🂠</div></div>
+            <div class="player-slot player-4" id="ui-player-4">Gracz prawy-góra<div class="hand">🂠 🂠</div></div>
+            <div class="player-slot player-2" id="ui-player-2">Gracz z lewej<div class="hand">🂠<br>🂠</div></div>
+            <div class="player-slot player-5" id="ui-player-5">Gracz z prawej<div class="hand">🂠<br>🂠</div></div>
 
             <div class="center-table">
                 <div class="card-pile deck" title="Pobierz kartę">Talia</div>
                 <div class="card-pile discard-pile" style="color:red;" title="Stos odrzuconych">♥ 7</div>
             </div>
 
-            <!-- Current Player (You) -->
-            <div class="player-slot player-1">
-                Ty (Twoje karty)
+            <!-- Ty -->
+            <div class="player-slot player-1 active" id="ui-player-1">
+                Ty
                 <div class="hand" id="my-hand">
                     <div class="card">♠ A</div>
                     <div class="card red">♥ K</div>
@@ -252,6 +265,8 @@
         <div id="chat-area">
             <div class="chat-header">
                 Pokój: <span id="room-id-display">---</span>
+                <br>
+                <span id="room-capacity" style="font-size: 0.8em; color: #ccc;"></span>
                 <br>
                 <button onclick="copyInvite()" style="padding: 5px 10px; font-size: 0.8em; margin-top: 5px;">Kopiuj zaproszenie</button>
             </div>
@@ -269,36 +284,64 @@
     <script>
         let currentRoom = null;
         let playerName = "Gracz_" + Math.floor(Math.random() * 1000);
+        let roomMaxPlayers = 5;
 
         function createRoom() {
-            // Generate a random 6-character room code
+            // Pobierz wybraną liczbę graczy
+            roomMaxPlayers = parseInt(document.getElementById('playerCount').value);
             currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
-            enterGame(currentRoom);
-            addSystemMessage("Stworzyłeś stół! Twój kod to: " + currentRoom);
+            
+            enterGame(currentRoom, roomMaxPlayers);
+            addSystemMessage(`Stworzyłeś stół dla ${roomMaxPlayers} graczy! Twój kod to: ${currentRoom}`);
         }
 
         function joinRoom() {
             const code = document.getElementById('joinCode').value.trim().toUpperCase();
             if (code.length > 0) {
                 currentRoom = code;
-                enterGame(currentRoom);
+                // W prawdziwej grze z serwerem, liczba graczy dla pokoju zostałaby pobrana z bazy.
+                // Tu dla podglądu przyjmujemy domyślnie 5, aby gracz dołączający też coś widział.
+                enterGame(currentRoom, 5); 
                 addSystemMessage("Dołączyłeś do stołu: " + currentRoom);
             } else {
                 alert("Proszę wpisać poprawny kod stołu.");
             }
         }
 
-        function enterGame(roomCode) {
+        function enterGame(roomCode, maxPlayers) {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
             document.getElementById('room-id-display').innerText = roomCode;
+            document.getElementById('room-capacity').innerText = `Liczba miejsc przy stole: ${maxPlayers}`;
             
-            // Here you would initialize your WebSocket or Firebase Realtime Database connection.
-            // Example: db.ref('rooms/' + roomCode).on('value', syncGameState);
+            setupTable(maxPlayers);
+        }
+
+        function setupTable(maxPlayers) {
+            // Najpierw ukryj miejsca innych graczy
+            document.getElementById('ui-player-2').classList.remove('active');
+            document.getElementById('ui-player-3').classList.remove('active');
+            document.getElementById('ui-player-4').classList.remove('active');
+            document.getElementById('ui-player-5').classList.remove('active');
+
+            // Rozmieść graczy na wizualizacji stołu zależnie od tego, ilu ich gra:
+            if (maxPlayers === 2) {
+                document.getElementById('ui-player-3').classList.add('active'); // Przeciwnik z góry
+            }
+            if (maxPlayers >= 3) {
+                document.getElementById('ui-player-3').classList.add('active'); // Przeciwnik z góry
+                document.getElementById('ui-player-2').classList.add('active'); // Przeciwnik z lewej
+            }
+            if (maxPlayers >= 4) {
+                document.getElementById('ui-player-4').classList.add('active'); // Przeciwnik z prawej-góry
+            }
+            if (maxPlayers === 5) {
+                document.getElementById('ui-player-5').classList.add('active'); // Przeciwnik z prawej-dół
+            }
         }
 
         function copyInvite() {
-            const inviteText = "Cześć! Zagrajmy w Remika. Mój kod stołu to: " + currentRoom;
+            const inviteText = `Cześć! Zagrajmy w Remika (stół na ${roomMaxPlayers} graczy). Mój kod stołu to: ${currentRoom}`;
             navigator.clipboard.writeText(inviteText).then(() => {
                 alert("Skopiowano zaproszenie do schowka!");
             });
@@ -312,7 +355,6 @@
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (text) {
-                // Locally display the message
                 const msgBox = document.getElementById('chat-messages');
                 const msgEl = document.createElement('div');
                 msgEl.className = 'msg';
@@ -321,8 +363,6 @@
                 msgBox.scrollTop = msgBox.scrollHeight;
                 
                 input.value = '';
-
-                // TODO: Send this message to the backend (WebSocket/Firebase) to broadcast to other 4 players
             }
         }
 
@@ -335,13 +375,6 @@
             msgBox.scrollTop = msgBox.scrollHeight;
         }
 
-        // --- Mock Game Interactivity ---
-        document.querySelector('.deck').addEventListener('click', () => {
-            alert('W prawdziwej grze pociągniesz tutaj kartę z talii.');
-            // Logic for drawing a card goes here
-        });
-
     </script>
 </body>
 </html>
-
