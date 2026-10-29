@@ -79,6 +79,7 @@
             flex-direction: row;
         }
         
+        /* Make table area responsive and handle overflow */
         #table-area {
             flex: 1;
             position: relative;
@@ -86,37 +87,42 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: auto; /* Changed to auto to allow scrolling if needed on small screens */
+            padding: 20px; /* Add some padding so elements don't touch edges directly */
         }
 
-        /* Player Positions (Up to 5 players) */
+        /* Player Positions - adjusted for better mobile viewing */
         .player-slot {
             position: absolute;
             background: rgba(0, 0, 0, 0.4);
-            padding: 10px 20px;
+            padding: 10px; /* Reduced padding */
             border-radius: 10px;
             text-align: center;
             border: 2px solid rgba(255,255,255,0.2);
-            display: none; /* Ukryte domyślnie, pokażemy w zależności od liczby graczy */
+            display: none;
+            z-index: 5; /* Ensure they are above table center */
         }
         .player-slot.active { display: block; }
 
-        .player-1 { bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: block; } /* Ty zawsze widoczny */
-        .player-2 { left: 20px; top: 50%; transform: translateY(-50%); } 
-        .player-3 { top: 20px; left: 30%; transform: translateX(-50%); } 
-        .player-4 { top: 20px; right: 30%; transform: translateX(50%); } 
-        .player-5 { right: 20px; top: 50%; transform: translateY(-50%); } 
+        /* Adjusted positioning to prevent overlapping */
+        .player-1 { bottom: 20px; left: 50%; transform: translateX(-50%); width: auto; min-width: 200px; display: block; z-index: 10; } /* Ty zawsze widoczny */
+        .player-2 { left: 10px; top: 50%; transform: translateY(-50%); } 
+        .player-3 { top: 10px; left: 25%; transform: translateX(-50%); } 
+        .player-4 { top: 10px; right: 25%; transform: translateX(50%); } 
+        .player-5 { right: 10px; top: 50%; transform: translateY(-50%); } 
 
         .center-table {
             display: flex;
-            gap: 30px;
+            gap: 15px; /* Reduced gap */
             background: rgba(255,255,255,0.1);
-            padding: 30px;
+            padding: 20px; /* Reduced padding */
             border-radius: 20px;
+            z-index: 1; /* Keep below players if screen is very small */
         }
         
         .card-pile {
-            width: 80px;
-            height: 120px;
+            width: 60px; /* Smaller cards for mobile */
+            height: 90px;
             background: var(--card-bg);
             border-radius: 8px;
             border: 2px solid #333;
@@ -127,75 +133,109 @@
             font-weight: bold;
             box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
             cursor: pointer;
+            font-size: 0.9em;
         }
         .deck { background: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 10px, #fff 10px, #fff 20px); color: transparent; }
 
-        /* Chat Area */
+        /* Chat Area - adjust for mobile */
         #chat-area {
-            width: 350px;
+            width: 300px; /* Slightly narrower */
             background-color: var(--chat-bg);
             display: flex;
             flex-direction: column;
             border-left: 2px solid #555;
+            z-index: 20;
         }
+        
+        /* Media query for smaller screens (mobile) */
+        @media (max-width: 768px) {
+            #game-container {
+                flex-direction: column; /* Stack table and chat vertically */
+            }
+            #table-area {
+                height: 60vh;
+                flex: none;
+            }
+            #chat-area {
+                width: 100%;
+                height: 40vh;
+                border-left: none;
+                border-top: 2px solid #555;
+            }
+            
+            /* Further adjust player positions for vertical stacking */
+            .player-2 { left: 5px; top: 40%; }
+            .player-5 { right: 5px; top: 40%; }
+            .player-3 { top: 5px; left: 30%; }
+            .player-4 { top: 5px; right: 30%; }
+            .player-1 { bottom: 5px; }
+            
+            .center-table {
+                padding: 10px;
+            }
+        }
+
         .chat-header {
-            padding: 15px;
+            padding: 10px;
             background: #111;
             text-align: center;
             font-weight: bold;
             border-bottom: 1px solid #333;
+            word-wrap: break-word; /* Ensure long IDs don't overflow */
         }
         #chat-messages {
             flex: 1;
-            padding: 15px;
+            padding: 10px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
-        .msg { background: #333; padding: 8px 12px; border-radius: 8px; font-size: 0.9em; word-wrap: break-word; }
+        .msg { background: #333; padding: 8px; border-radius: 8px; font-size: 0.85em; word-wrap: break-word; }
         .msg.system { background: transparent; color: #fbc02d; font-style: italic; text-align: center; }
         .msg .sender { font-weight: bold; color: #4caf50; margin-right: 5px; }
         
         .chat-input-area {
             display: flex;
-            padding: 10px;
+            padding: 8px;
             background: #000;
         }
         .chat-input-area input {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             border: none;
             border-radius: 4px;
             margin-right: 5px;
+            font-size: 0.9em;
         }
         .chat-input-area button {
             margin: 0;
-            padding: 10px 15px;
-            font-size: 1em;
+            padding: 8px 12px;
+            font-size: 0.9em;
         }
 
         /* Hand representation */
         .hand {
             display: flex;
             justify-content: center;
-            gap: -40px;
-            margin-top: 10px;
+            gap: -20px; /* Reduced negative gap so cards overlap less tightly */
+            margin-top: 5px;
         }
         .card {
-            width: 60px;
-            height: 90px;
+            width: 40px; /* Smaller cards in hand */
+            height: 60px;
             background: white;
-            border-radius: 5px;
+            border-radius: 4px;
             color: black;
             border: 1px solid #999;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
-            margin-left: -20px;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            font-size: 1em;
+            margin-left: -10px;
+            box-shadow: -1px 0 3px rgba(0,0,0,0.2);
             transition: 0.2s;
+            position: relative; /* Needed for hover to work well with negative margins */
         }
         .card:hover { transform: translateY(-10px); z-index: 10; }
         .card.red { color: red; }
@@ -237,10 +277,10 @@
         <div id="table-area">
             
             <!-- Inni gracze -->
-            <div class="player-slot player-3" id="ui-player-3">Gracz z góry<div class="hand">🂠 🂠</div></div>
-            <div class="player-slot player-4" id="ui-player-4">Gracz prawy-góra<div class="hand">🂠 🂠</div></div>
-            <div class="player-slot player-2" id="ui-player-2">Gracz z lewej<div class="hand">🂠<br>🂠</div></div>
-            <div class="player-slot player-5" id="ui-player-5">Gracz z prawej<div class="hand">🂠<br>🂠</div></div>
+            <div class="player-slot player-3" id="ui-player-3">Gracz 3<div class="hand">🂠 🂠</div></div>
+            <div class="player-slot player-4" id="ui-player-4">Gracz 4<div class="hand">🂠 🂠</div></div>
+            <div class="player-slot player-2" id="ui-player-2">Gracz 2<div class="hand">🂠<br>🂠</div></div>
+            <div class="player-slot player-5" id="ui-player-5">Gracz 5<div class="hand">🂠<br>🂠</div></div>
 
             <div class="center-table">
                 <div class="card-pile deck" title="Pobierz kartę">Talia</div>
@@ -298,10 +338,25 @@
         function joinRoom() {
             const code = document.getElementById('joinCode').value.trim().toUpperCase();
             if (code.length > 0) {
-                currentRoom = code;
-                // W prawdziwej grze z serwerem, liczba graczy dla pokoju zostałaby pobrana z bazy.
-                // Tu dla podglądu przyjmujemy domyślnie 5, aby gracz dołączający też coś widział.
-                enterGame(currentRoom, 5); 
+                // Here we would ideally fetch the room capacity from a server.
+                // For now, we'll try to extract it if the user pasted the full invite message
+                let maxP = 5; // default
+                if(code.includes("STÓŁ NA") && code.includes("GRACZY")) {
+                     const match = code.match(/STÓŁ NA (\d+) GRACZY/i);
+                     if(match && match[1]) {
+                         maxP = parseInt(match[1]);
+                     }
+                }
+                
+                // Try to extract just the code if they pasted the whole message
+                let actualCode = code;
+                const codeMatch = code.match(/KOD STOŁU TO:\s*([A-Z0-9]+)/i);
+                if(codeMatch && codeMatch[1]) {
+                    actualCode = codeMatch[1];
+                }
+
+                currentRoom = actualCode.substring(0, 6); // ensure max 6 chars if they pasted weirdly
+                enterGame(currentRoom, maxP); 
                 addSystemMessage("Dołączyłeś do stołu: " + currentRoom);
             } else {
                 alert("Proszę wpisać poprawny kod stołu.");
@@ -312,7 +367,7 @@
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
             document.getElementById('room-id-display').innerText = roomCode;
-            document.getElementById('room-capacity').innerText = `Liczba miejsc przy stole: ${maxPlayers}`;
+            document.getElementById('room-capacity').innerText = `Liczba miejsc: ${maxPlayers}`;
             
             setupTable(maxPlayers);
         }
@@ -343,6 +398,15 @@
         function copyInvite() {
             const inviteText = `Cześć! Zagrajmy w Remika (stół na ${roomMaxPlayers} graczy). Mój kod stołu to: ${currentRoom}`;
             navigator.clipboard.writeText(inviteText).then(() => {
+                alert("Skopiowano zaproszenie do schowka!");
+            }).catch(err => {
+                // Fallback for older browsers
+                const tempInput = document.createElement("input");
+                tempInput.value = inviteText;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
                 alert("Skopiowano zaproszenie do schowka!");
             });
         }
