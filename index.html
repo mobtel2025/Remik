@@ -274,7 +274,7 @@
         .msg { background: #222; padding: 6px 10px; border-radius: 8px; font-size: 0.85em; word-wrap: break-word; }
         .msg.system { background: transparent; color: #fbc02d; font-style: italic; text-align: center; }
         .msg .sender { font-weight: bold; color: #4caf50; margin-right: 5px; }
-        .msg .bot-sender { font-weight: bold; color: #e53935; margin-right: 5px; } /* Kolor bota */
+        .msg .bot-sender { font-weight: bold; color: #e53935; margin-right: 5px; }
         
         .chat-input-area {
             display: flex;
@@ -443,7 +443,6 @@
 
         function drawCard() {
             addSystemMessage("Pobrałeś kartę z talii.");
-            // Symulacja dodania losowej karty
             const hand = document.getElementById('my-hand');
             const newCard = document.createElement('div');
             newCard.className = Math.random() > 0.5 ? 'card red' : 'card';
@@ -518,12 +517,10 @@
             document.getElementById('ui-player-4').classList.remove('active');
             document.getElementById('ui-player-5').classList.remove('active');
 
-            // Ustawienia standardowych nazw
             document.getElementById('ui-player-3').innerHTML = 'Gracz 3<div class="card-count">🂠 13</div>';
             document.getElementById('ui-player-2').innerHTML = 'Gracz 2<div class="card-count">🂠 13</div>';
 
             if (maxPlayers === 1) {
-                // Tryb Komputera (Bot widoczny na górze)
                 const botSlot = document.getElementById('ui-player-3');
                 botSlot.classList.add('active');
                 botSlot.innerHTML = '🤖 Komputer<div class="card-count" id="bot-card-count">🂠 13</div>';
@@ -541,12 +538,10 @@
             }
         }
 
-        // Prosta logika bota komputerowego
         function triggerBotTurn() {
             clearTimeout(botInterval);
             const chat = document.getElementById('chat-messages');
             
-            // Bot "myśli"
             botInterval = setTimeout(() => {
                 const msgEl = document.createElement('div');
                 msgEl.className = 'msg';
@@ -556,7 +551,6 @@
 
                 document.getElementById('bot-card-count').innerText = "🂠 14";
 
-                // Bot "odrzuca" po 2 sekundach
                 setTimeout(() => {
                     const suits = ['♥', '♦', '♣', '♠'];
                     const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
