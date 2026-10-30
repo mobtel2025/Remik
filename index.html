@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mobtel Remik Online</title>
+    <!-- Biblioteka PeerJS do Prawdziwego Multiplayer P2P bez serwera -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --table-green: #2e7d32;
@@ -12,146 +14,75 @@
             --gold: #fbc02d;
         }
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--table-green);
-            color: #fff;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            overflow: hidden;
+            background-color: var(--table-green); color: #fff;
+            height: 100vh; width: 100vw; display: flex; overflow: hidden;
             overscroll-behavior-y: contain; 
         }
         
         /* Lobby Styles */
         #lobby {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, #388e3c, #1b5e20);
-            z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, #388e3c, #1b5e20); z-index: 100;
         }
         .lobby-box {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 30px 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            width: 85%;
-            max-width: 400px;
+            background: rgba(0, 0, 0, 0.8); padding: 30px 20px; border-radius: 15px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 85%; max-width: 400px;
         }
         h1 { margin-top: 0; font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); color: var(--gold); }
         button {
-            background-color: var(--gold);
-            border: none;
-            padding: 12px 18px;
-            font-size: 1em;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 5px 0;
-            width: 100%;
-            transition: 0.2s;
-            color: #000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            background-color: var(--gold); border: none; padding: 12px 18px; font-size: 1em;
+            font-weight: bold; border-radius: 8px; cursor: pointer; margin: 5px 0; width: 100%;
+            transition: 0.2s; color: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         button:active { transform: scale(0.96); box-shadow: 0 2px 3px rgba(0,0,0,0.3); }
         button:disabled { background-color: #777; color: #aaa; cursor: not-allowed; box-shadow: none; }
         
         input[type="text"], select {
-            padding: 12px;
-            font-size: 1.1em;
-            border-radius: 6px;
-            border: none;
-            margin: 10px 0;
-            width: 100%;
-            text-align: center;
-            box-sizing: border-box;
+            padding: 12px; font-size: 1.1em; border-radius: 6px; border: none;
+            margin: 10px 0; width: 100%; text-align: center; box-sizing: border-box;
         }
         .settings-group { margin: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 5px; }
 
         /* Game Area Styles */
-        #game-container {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column; 
-        }
+        #game-container { display: none; width: 100%; height: 100%; flex-direction: column; }
         
         #table-area {
-            flex: 1;
-            position: relative;
+            flex: 1; position: relative;
             background: radial-gradient(ellipse at center, #4caf50 0%, #1b5e20 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
 
         .watermark {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 4em;
-            font-weight: 900;
-            color: rgba(255, 255, 255, 0.06);
-            text-align: center;
-            pointer-events: none;
-            z-index: 0;
-            line-height: 1;
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 4em; font-weight: 900; color: rgba(255, 255, 255, 0.06);
+            text-align: center; pointer-events: none; z-index: 0; line-height: 1;
         }
 
         .player-slot {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 5px 10px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.2);
-            display: none;
-            z-index: 5;
-            font-size: 0.8em;
-            white-space: nowrap;
+            position: absolute; background: rgba(0, 0, 0, 0.6); padding: 5px 10px;
+            border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2);
+            display: none; z-index: 5; font-size: 0.8em; white-space: nowrap;
         }
-        .player-slot.active { display: block; }
         .card-count { color: var(--gold); font-weight: bold; margin-top: 2px; font-size: 1.1em; }
 
         .player-2 { left: 10px; top: 30%; transform: translateY(-50%); } 
-        .player-3 { top: 10px; left: 30%; transform: translateX(-50%); } 
-        .player-4 { top: 10px; right: 30%; transform: translateX(50%); } 
+        .player-3 { top: 10px; left: 50%; transform: translateX(-50%); } 
+        .player-4 { top: 10px; right: 20%; transform: translateX(50%); } 
         .player-5 { right: 10px; top: 30%; transform: translateY(-50%); } 
 
         .center-table {
-            display: flex;
-            gap: 15px;
-            background: rgba(0,0,0,0.3);
-            padding: 15px;
-            border-radius: 15px;
-            z-index: 2;
-            transform: translateY(-20px);
+            display: flex; gap: 15px; background: rgba(0,0,0,0.3); padding: 15px;
+            border-radius: 15px; z-index: 2; transform: translateY(-20px);
         }
         
         .card-pile {
-            width: 55px;
-            height: 80px;
-            background: var(--card-bg);
-            border-radius: 6px;
-            border: 1px solid #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: bold;
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            cursor: pointer;
-            font-size: 1.2em;
-            transition: 0.2s;
-            position: relative;
+            width: 55px; height: 80px; background: var(--card-bg); border-radius: 6px;
+            border: 1px solid #333; display: flex; align-items: center; justify-content: center;
+            color: #000; font-weight: bold; box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            cursor: pointer; font-size: 1.2em; transition: 0.2s; position: relative;
         }
         .card-pile:active { transform: scale(0.9); }
         .deck { background: repeating-linear-gradient(45deg, #0d47a1, #0d47a1 8px, #fff 8px, #fff 16px); color: transparent; }
@@ -159,96 +90,43 @@
         .discard-pile::after { content: "STOS"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; }
 
         .melds-area {
-            position: absolute;
-            top: 55%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            height: 100px;
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            align-items: center;
-            z-index: 2;
+            position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; height: 100px; display: flex; gap: 15px; overflow-x: auto; align-items: center; z-index: 2;
         }
         .meld-group {
-            display: flex;
-            background: rgba(255,255,255,0.1);
-            padding: 5px;
-            border-radius: 8px;
-            border: 1px dashed rgba(255,255,255,0.3);
+            display: flex; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.3);
         }
         .meld-group .card { margin-right: -25px; transform: scale(0.8); transform-origin: left center; }
         .meld-group .card:last-child { margin-right: 0; }
 
         /* Panel Gracza */
         .player-1 { 
-            position: absolute;
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center;
-            z-index: 10; 
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 60%, transparent);
-            padding-top: 30px;
+            position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column;
+            align-items: center; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.95) 60%, transparent); padding-top: 30px;
         }
         
-        .action-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 5px;
-            width: 95%;
-            justify-content: center;
-        }
+        .action-bar { display: flex; gap: 8px; margin-bottom: 5px; width: 95%; justify-content: center; }
         .action-bar button { padding: 8px 10px; font-size: 0.85em; margin: 0; width: auto; flex: 1; }
 
         .status-label {
-            background: rgba(0,0,0,0.8);
-            padding: 3px 15px;
-            border-radius: 10px;
-            font-size: 0.85em;
-            color: var(--gold);
-            font-weight: bold;
-            margin-bottom: 5px;
-            border: 1px solid #444;
-            text-align: center;
+            background: rgba(0,0,0,0.8); padding: 3px 15px; border-radius: 10px; font-size: 0.85em;
+            color: var(--gold); font-weight: bold; margin-bottom: 5px; border: 1px solid #444; text-align: center;
         }
 
         .hand-container {
-            width: 100%;
-            overflow-x: auto;
-            overflow-y: visible;
-            padding: 10px 15px 20px 15px;
-            box-sizing: border-box;
-            scrollbar-width: thin;
-            scrollbar-color: var(--gold) rgba(0,0,0,0.3);
-            min-height: 110px;
+            width: 100%; overflow-x: auto; overflow-y: visible; padding: 10px 15px 20px 15px;
+            box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--gold) rgba(0,0,0,0.3); min-height: 110px;
         }
-        
         .hand { display: flex; justify-content: flex-start; width: max-content; margin: 0 auto; }
         
         /* Wygląd Kart */
         .card {
-            width: 55px;
-            height: 80px;
-            background: white;
-            border-radius: 6px;
-            color: black;
-            border: 1px solid #666;
-            margin-right: -32px; 
-            box-shadow: -3px 0 6px rgba(0,0,0,0.4);
-            transition: transform 0.15s, border 0.15s, margin 0.2s;
-            position: relative;
-            background-color: #fafafa;
-            user-select: none;
-            padding: 4px;
-            box-sizing: border-box;
-            cursor: pointer;
+            width: 55px; height: 80px; background: white; border-radius: 6px; color: black;
+            border: 1px solid #666; margin-right: -32px; box-shadow: -3px 0 6px rgba(0,0,0,0.4);
+            transition: transform 0.15s, border 0.15s, margin 0.2s; position: relative;
+            background-color: #fafafa; user-select: none; padding: 4px; box-sizing: border-box; cursor: pointer;
         }
         .card:last-child { margin-right: 0; }
-        
         .card-corner { display: flex; flex-direction: column; align-items: center; width: 22px; line-height: 1; }
         .card-corner .rank { font-size: 1.2em; font-weight: bold; }
         .card-corner .suit { font-size: 1.1em; margin-top: -2px; }
@@ -262,17 +140,9 @@
 
         /* Chat Area */
         #chat-area {
-            width: 100%;
-            height: 30vh;
-            background-color: var(--chat-bg);
-            display: flex;
-            flex-direction: column;
-            border-top: 2px solid #555;
-            z-index: 20;
+            width: 100%; height: 30vh; background-color: var(--chat-bg); display: flex; flex-direction: column; border-top: 2px solid #555; z-index: 20;
         }
-        .chat-header {
-            padding: 5px 10px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;
-        }
+        .chat-header { padding: 5px 10px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         .chat-header-info { font-size: 0.8em; }
         .btn-small { padding: 4px 8px; font-size: 0.75em; width: auto; margin: 0; }
 
@@ -281,7 +151,6 @@
         .msg.system { background: transparent; color: var(--gold); font-style: italic; border-left: 3px solid var(--gold); border-radius: 0;}
         .msg.error { background: transparent; color: #ef5350; font-style: italic; border-left: 3px solid #ef5350; border-radius: 0;}
         .msg .sender { font-weight: bold; color: #4caf50; margin-right: 5px; }
-        .msg .bot-sender { font-weight: bold; color: #e53935; margin-right: 5px; }
         
         .chat-input-area { display: flex; padding: 6px; background: #000; }
         .chat-input-area input { flex: 1; padding: 8px; border-radius: 4px; margin-right: 6px; font-size: 0.9em; }
@@ -312,7 +181,6 @@
             .card { width: 70px; height: 100px; margin-right: -45px; }
             .card-corner .rank { font-size: 1.5em; }
             .card-corner .suit { font-size: 1.3em; }
-            .player-3 { left: 50%; }
         }
     </style>
 </head>
@@ -321,24 +189,24 @@
     <div id="lobby">
         <div class="lobby-box">
             <h1>MOBTEL REMIK</h1>
-            <p>1-5 Graczy | 14 kart startowych | Min. 51 pkt</p>
+            <p>Pełnoprawny P2P Multiplayer</p>
             <hr style="border-color: #555; margin: 15px 0;">
             
             <div class="settings-group">
                 <label for="playerCount" style="font-weight: bold; font-size: 0.9em;">Wybierz tryb (ile osób):</label>
                 <select id="playerCount">
-                    <option value="1">1 gracz (Gra z Botem)</option>
-                    <option value="2">2 graczy (Gra online)</option>
-                    <option value="3">3 graczy (Gra online)</option>
-                    <option value="4">4 graczy (Gra online)</option>
-                    <option value="5" selected>5 graczy (Gra online)</option>
+                    <option value="1">1 gracz (Testy offline z Botem)</option>
+                    <option value="2" selected>2 graczy (Gra Online P2P)</option>
+                    <option value="3">3 graczy (Gra Online P2P)</option>
+                    <option value="4">4 graczy (Gra Online P2P)</option>
+                    <option value="5">5 graczy (Gra Online P2P)</option>
                 </select>
             </div>
             
-            <button onclick="startGame()">Stwórz stół</button>
+            <button onclick="startGame()">Stwórz stół jako HOST</button>
             <p style="margin: 15px 0; color: #999; font-size: 0.9em;">- LUB DOŁĄCZ -</p>
-            <input type="text" id="joinCode" placeholder="Wpisz kod stołu...">
-            <button onclick="joinRoom()" style="background-color: #4caf50; color: white;">Dołącz do gry</button>
+            <input type="text" id="joinCode" placeholder="Wpisz otrzymany kod...">
+            <button onclick="joinRoom()" style="background-color: #4caf50; color: white;">Dołącz do znajomego</button>
         </div>
     </div>
 
@@ -346,11 +214,11 @@
         <div id="table-area">
             <div class="watermark">MOBTEL<br>REMIK</div>
 
-            <!-- Inni gracze -->
-            <div class="player-slot player-2" id="ui-player-2">Gracz 2<div class="card-count" id="count-2">🂠 0</div></div>
-            <div class="player-slot player-3" id="ui-player-3">Gracz 3<div class="card-count" id="count-3">🂠 0</div></div>
-            <div class="player-slot player-4" id="ui-player-4">Gracz 4<div class="card-count" id="count-4">🂠 0</div></div>
-            <div class="player-slot player-5" id="ui-player-5">Gracz 5<div class="card-count" id="count-5">🂠 0</div></div>
+            <!-- Przeciwnicy (wyświetlani dynamicznie) -->
+            <div class="player-slot player-2" id="ui-player-2"></div>
+            <div class="player-slot player-3" id="ui-player-3"></div>
+            <div class="player-slot player-4" id="ui-player-4"></div>
+            <div class="player-slot player-5" id="ui-player-5"></div>
 
             <div class="center-table">
                 <div class="card-pile deck" id="deck-pile" onclick="drawFromDeck()"></div>
@@ -361,7 +229,7 @@
 
             <!-- Panel Gracza -->
             <div class="player-1" id="ui-player-1">
-                <div class="status-label" id="turn-status">Oczekiwanie na rozpoczęcie...</div>
+                <div class="status-label" id="turn-status">Oczekiwanie...</div>
                 
                 <div class="action-bar">
                     <button id="btn-sort" onclick="sortHand()">Sortuj</button>
@@ -381,22 +249,23 @@
                     Pokój: <span id="room-id-display" style="color:var(--gold);">---</span><br>
                     <span id="room-capacity" style="color: #aaa;"></span>
                 </div>
-                <button class="btn-small" id="copy-btn" onclick="copyInvite()">Kopiuj Kod</button>
+                <button class="btn-small" id="copy-btn" onclick="copyInvite()">Skopiuj Kod</button>
             </div>
             <div id="chat-messages"></div>
             <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Napisz wiadomość..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <input type="text" id="chat-input" placeholder="Wiadomość..." onkeypress="if(event.key==='Enter') sendMessage()">
                 <button onclick="sendMessage()">➤</button>
             </div>
         </div>
 
-        <!-- Waiting Screen (Simulated Online) -->
+        <!-- Oczekiwanie na graczy Online -->
         <div id="waiting-screen" class="overlay-screen">
             <div class="score-board">
                 <h2 style="color:var(--gold); margin-top:0;">Oczekiwanie na graczy</h2>
                 <div class="loader"></div>
-                <p id="waiting-text" style="font-weight:bold;">Podłączono graczy: 1 / 5</p>
-                <p style="font-size:0.8em; color:#aaa;">Wyślij znajomym kod z czatu!</p>
+                <p id="waiting-text" style="font-weight:bold;">Podłączono graczy: 1 / ?</p>
+                <p style="font-size:0.8em; color:#aaa; margin-top: 15px;">Wyślij znajomym kod widoczny nad czatem.</p>
+                <p style="font-size:0.8em; color:#e53935;">Nie zamykaj tego okna, dopóki gra nie wystartuje.</p>
             </div>
         </div>
 
@@ -405,127 +274,161 @@
             <div class="score-board">
                 <h1 style="color:var(--gold); margin-top:0;">Koniec Gry!</h1>
                 <p id="winner-text" style="font-weight:bold; font-size:1.2em;"></p>
-                <div class="score-row"><span style="color:#4caf50;">Twoje punkty ujemne:</span> <strong id="score-player">0</strong></div>
-                <div class="score-row"><span style="color:#e53935;">Punkty przeciwników:</span> <strong id="score-bot">0</strong></div>
-                <button onclick="location.reload()" style="margin-top:20px;">Wróć do Lobby</button>
+                <div id="scores-list"></div>
+                <button onclick="location.reload()" style="margin-top:20px;">Wróć do Menu</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- GAME ENGINE & RULES ---
+        // --- LOGIKA MULTIPLAYER I GRY (PEER.JS) ---
         const suits = ['♥', '♦', '♣', '♠'];
         const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
         const negValues = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':10,'Q':10,'K':10,'A':11, 'JOKER':30};
         const sortValues = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14, 'JOKER':15};
 
+        let isHost = false;
+        let peer = null;
+        let hostConn = null;
+        let players = []; 
         let deck = [];
         let discardPile = [];
-        let playerHand = [];
+        let melds = [];
+        let turnIndex = 0;
+        let turnPhase = 'draw';
+        let gameStatePhase = 'lobby';
         
-        let hasMelded = false; 
-        let playerTurnPhase = 'wait'; 
         let currentRoom = null;
         let playerName = "Gracz_" + Math.floor(Math.random() * 1000);
         let roomMaxPlayers = 1;
-        let onlineSimulationInterval;
+        
+        let myHand = [];
+        let myTurn = false;
+        let myTurnPhase = 'wait';
+        let myIndex = -1;
+        let selectedCards = [];
 
+        // STARTUJ JAKO HOST
         function startGame() {
             roomMaxPlayers = parseInt(document.getElementById('playerCount').value);
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('game-container').style.display = 'flex';
             
             if (roomMaxPlayers === 1) {
-                currentRoom = "LOKALNY";
-                document.getElementById('room-id-display').innerText = currentRoom;
-                document.getElementById('room-capacity').innerText = "Tryb: Z Botem";
-                document.getElementById('copy-btn').style.display = 'none';
+                // Tryb lokalny z Botem (dla testów)
+                isHost = true; currentRoom = "LOKALNY"; playerName = "Ty";
+                players = [
+                    { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false },
+                    { name: '🤖 Komputer', conn: null, hand: [], isBot: true, hasMelded: false }
+                ];
                 
-                setupTableSlots(1);
-                sysLog("Rozpoczęto grę z Komputerem. Twój ruch (14 kart).");
-                initDeckAndDeal();
+                showGameUI(currentRoom, "Tryb: Z Botem", false);
+                gameStatePhase = 'playing';
+                document.getElementById('waiting-screen').style.display = 'none';
+                startGameHost();
+                
             } else {
+                // Prawdziwy Host P2P
                 currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
-                document.getElementById('room-id-display').innerText = currentRoom;
-                document.getElementById('room-capacity').innerText = `Miejsc: ${roomMaxPlayers}`;
+                document.getElementById('lobby').innerHTML = `<div class="lobby-box"><h1>Zakładanie serwera...</h1><div class="loader"></div></div>`;
                 
-                setupTableSlots(roomMaxPlayers);
-                sysLog(`Utworzono stół dla ${roomMaxPlayers} graczy. Kod: ${currentRoom}`);
-                simulateOnlineLobby(); 
+                isHost = true;
+                peer = new Peer('mobtel-' + currentRoom.toLowerCase());
+                
+                peer.on('open', (id) => {
+                    players = [ { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false } ];
+                    gameStatePhase = 'lobby';
+                    showGameUI(currentRoom, `Miejsc: ${roomMaxPlayers}`, true);
+                    updateWaitingScreen();
+                });
+
+                peer.on('connection', (conn) => {
+                    conn.on('data', (data) => {
+                        if (data.type === 'join') {
+                            if(players.length < roomMaxPlayers && gameStatePhase === 'lobby') {
+                                players.push({ name: data.name, conn: conn, hand: [], isBot: false, hasMelded: false });
+                                updateWaitingScreen();
+                                broadcastChat("System", `${data.name} połączył się z hostem.`);
+                                
+                                if(players.length === roomMaxPlayers) {
+                                    gameStatePhase = 'playing';
+                                    setTimeout(() => startGameHost(), 1500);
+                                }
+                            } else {
+                                conn.send({ type: 'error', text: 'Pokój jest pełny lub gra wystartowała.' });
+                            }
+                        } else {
+                            let idx = players.findIndex(p => p.conn === conn);
+                            if(idx > -1) processAction(data, idx);
+                        }
+                    });
+                });
+                
+                peer.on('error', (err) => { alert("Błąd P2P: " + err.type); location.reload(); });
             }
         }
 
+        // DOŁĄCZ DO HOSTA
         function joinRoom() {
-            const code = document.getElementById('joinCode').value.trim().toUpperCase();
-            if (code.length > 0) {
-                let actualCode = code;
-                const match = code.match(/KOD:\s*([A-Z0-9]+)/i);
-                if(match) actualCode = match[1];
-
-                currentRoom = actualCode.substring(0, 6);
-                roomMaxPlayers = 5; // Domyslnie doczepiamy do pokoju 5os
-                
-                document.getElementById('lobby').style.display = 'none';
-                document.getElementById('game-container').style.display = 'flex';
-                document.getElementById('room-id-display').innerText = currentRoom;
-                document.getElementById('room-capacity').innerText = "Dołączanie...";
-                
-                setupTableSlots(roomMaxPlayers);
-                sysLog("Połączono z pokojem. Oczekiwanie na hosta...");
-                simulateOnlineLobby();
-            } else {
-                alert("Wpisz kod stołu.");
-            }
-        }
-
-        function setupTableSlots(count) {
-            for(let i=2; i<=5; i++) document.getElementById('ui-player-'+i).classList.remove('active');
+            let codeInput = document.getElementById('joinCode').value.trim();
+            if (!codeInput) return;
             
-            if(count === 1) {
-                document.getElementById('ui-player-3').classList.add('active');
-                document.getElementById('ui-player-3').innerHTML = `🤖 Komputer<div class="card-count" id="count-3">🂠 0</div>`;
-            } else if(count === 2) {
-                document.getElementById('ui-player-3').classList.add('active');
-            } else if(count === 3) {
-                document.getElementById('ui-player-2').classList.add('active');
-                document.getElementById('ui-player-4').classList.add('active');
-            } else if(count === 4) {
-                document.getElementById('ui-player-2').classList.add('active');
-                document.getElementById('ui-player-3').classList.add('active');
-                document.getElementById('ui-player-4').classList.add('active');
-            } else if(count === 5) {
-                document.getElementById('ui-player-2').classList.add('active');
-                document.getElementById('ui-player-3').classList.add('active');
-                document.getElementById('ui-player-4').classList.add('active');
-                document.getElementById('ui-player-5').classList.add('active');
-            }
-        }
+            let match = codeInput.match(/KOD:\s*([A-Z0-9]+)/i) || codeInput.match(/TO:\s*([A-Z0-9]+)/i);
+            let actualCode = match ? match[1] : codeInput;
+            actualCode = actualCode.substring(0, 6).toLowerCase();
 
-        // --- Symulacja Dołączania Graczy Online ---
-        function simulateOnlineLobby() {
-            let joined = 1;
-            document.getElementById('waiting-screen').style.display = 'flex';
-            document.getElementById('waiting-text').innerText = `Podłączono graczy: ${joined} / ${roomMaxPlayers}`;
+            document.getElementById('lobby').innerHTML = `<div class="lobby-box"><h1>Szukanie Hosta...</h1><div class="loader"></div></div>`;
             
-            onlineSimulationInterval = setInterval(() => {
-                joined++;
-                document.getElementById('waiting-text').innerText = `Podłączono graczy: ${joined} / ${roomMaxPlayers}`;
-                sysLog(`Gracz_${Math.floor(Math.random()*900)+100} dołączył do gry.`);
+            isHost = false;
+            peer = new Peer();
+            
+            peer.on('open', () => {
+                hostConn = peer.connect('mobtel-' + actualCode);
                 
-                if(joined >= roomMaxPlayers) {
-                    clearInterval(onlineSimulationInterval);
-                    setTimeout(() => {
+                hostConn.on('open', () => {
+                    hostConn.send({ type: 'join', name: playerName });
+                    currentRoom = actualCode.toUpperCase();
+                    showGameUI(currentRoom, "Oczekiwanie na Hosta", false);
+                    document.getElementById('waiting-text').innerText = "Czekaj na rozpoczęcie...";
+                });
+
+                hostConn.on('data', (data) => {
+                    if (data.type === 'state') {
                         document.getElementById('waiting-screen').style.display = 'none';
-                        sysLog("Komplet graczy. Rozdaję karty!");
-                        initDeckAndDeal();
-                    }, 1000);
-                }
-            }, 3000);
+                        applyState(data);
+                    }
+                    else if (data.type === 'chat') addChat(data.sender, data.text, false);
+                    else if (data.type === 'error') addChat("Błąd", data.text, true);
+                    else if (data.type === 'wait_update') document.getElementById('waiting-text').innerText = `Podłączono graczy: ${data.current} / ${data.max}`;
+                    else if (data.type === 'end') showEndScreen(data);
+                });
+            });
+
+            peer.on('error', (err) => {
+                alert("Błąd połączenia. Upewnij się, że gospodarz stworzył stół i podał poprawny kod.");
+                location.reload();
+            });
         }
 
-        function initDeckAndDeal() {
-            deck = [];
+        // POKAZYWANIE UI (Wspólne dla hosta i klienta)
+        function showGameUI(room, capTxt, showCopyBtn) {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            document.getElementById('waiting-screen').style.display = 'flex';
+            document.getElementById('room-id-display').innerText = room;
+            document.getElementById('room-capacity').innerText = capTxt;
+            document.getElementById('copy-btn').style.display = showCopyBtn ? 'block' : 'none';
+        }
+
+        function updateWaitingScreen() {
+            document.getElementById('waiting-text').innerText = `Podłączono graczy: ${players.length} / ${roomMaxPlayers}`;
+            players.forEach((p, idx) => {
+                if(idx !== 0 && p.conn) p.conn.send({ type: 'wait_update', current: players.length, max: roomMaxPlayers });
+            });
+        }
+
+        // HOSTA LOGIKA: ROZDANIE KART I START
+        function startGameHost() {
+            deck = []; discardPile = []; melds = [];
             for(let d=0; d<2; d++){
                 for(let s of suits){
                     for(let r of ranks){
@@ -541,266 +444,279 @@
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
 
-            // Gracz (Ty) dostaje 14 (Zaczyna)
-            for(let i=0; i<14; i++) playerHand.push(deck.pop());
-            // Reszta dostaje 13
-            for(let i=2; i<=5; i++) {
-                let countEl = document.getElementById('count-'+i);
-                if(countEl) countEl.innerText = `🂠 13`;
-            }
+            players.forEach(p => { for(let i=0; i<13; i++) p.hand.push(deck.pop()); });
             
+            // Host (indeks 0) dostaje 14 kartę i od razu jest w fazie odrzucania
+            players[0].hand.push(deck.pop());
             discardPile.push(deck.pop());
             
-            playerTurnPhase = 'discard'; // Jako host (14 kart), zaczynamy od wyrzucenia
+            turnIndex = 0; turnPhase = 'discard'; 
+
+            document.getElementById('waiting-screen').style.display = 'none';
+            broadcastChat("System", "Wszyscy są! Gra rozpoczęta. Gracz rozdający ma ruch.");
+            broadcastState();
+        }
+
+        // HOSTA LOGIKA: WYSYŁANIE STANU GRY
+        function broadcastState() {
+            if(!isHost) return;
+            players.forEach((p, idx) => {
+                let packet = {
+                    type: 'state',
+                    turnPhase: turnPhase,
+                    discardPile: discardPile,
+                    melds: melds,
+                    playersInfo: players.map((pl, i) => ({ name: pl.name, cardCount: pl.hand.length, isTurn: (i === turnIndex) })),
+                    myHand: p.hand,
+                    myIndex: idx
+                };
+                if(idx === 0) applyState(packet); // Host update lokalny
+                else if(!p.isBot) p.conn.send(packet);
+            });
+        }
+
+        // WYSYŁANIE AKCJI DO HOSTA
+        function sendAction(actionObj) {
+            if (isHost) processAction(actionObj, 0); 
+            else if(hostConn) hostConn.send(actionObj);
+        }
+
+        // HOSTA LOGIKA: PRZETWARZANIE RUCHÓW
+        function processAction(action, pIdx) {
+            if (action.type === 'chat') { broadcastChat(players[pIdx].name, action.text); return; }
+            if (pIdx !== turnIndex) return; 
+
+            let p = players[pIdx];
+
+            if (action.type === 'draw' && turnPhase === 'draw') {
+                if (deck.length === 0) recycleDiscard();
+                p.hand.push(deck.pop());
+                turnPhase = 'discard';
+                broadcastState();
+            }
+            else if (action.type === 'take_discard' && turnPhase === 'draw') {
+                if (discardPile.length > 0) {
+                    p.hand.push(discardPile.pop());
+                    turnPhase = 'discard';
+                    broadcastState();
+                }
+            }
+            else if (action.type === 'meld' && turnPhase === 'discard') {
+                let sel = p.hand.filter(c => action.cardIds.includes(c.id));
+                if (sel.length >= 3) {
+                    let pts = sel.reduce((sum, c) => sum + (c.isJoker ? 15 : c.nVal), 0);
+                    let isClean = sel.every(c => !c.isJoker);
+                    
+                    if (!p.hasMelded && (pts < 51 || (!isClean && sel.length === 3))) {
+                        sendSystemMsg(pIdx, "Błąd: Potrzebujesz min. 51 punktów i Czystego Sekwensu (bez jokera).");
+                        return;
+                    }
+                    
+                    p.hand = p.hand.filter(c => !action.cardIds.includes(c.id));
+                    melds.push(sel);
+                    p.hasMelded = true;
+                    broadcastChat("System", `${p.name} wyłożył grupę kart.`);
+                    broadcastState();
+                    checkWin(pIdx);
+                }
+            }
+            else if (action.type === 'discard' && turnPhase === 'discard') {
+                let cIdx = p.hand.findIndex(c => c.id === action.cardId);
+                if (cIdx > -1) {
+                    discardPile.push(p.hand.splice(cIdx, 1)[0]);
+                    broadcastChat("System", `${p.name} zakończył turę.`);
+                    
+                    if (!checkWin(pIdx)) {
+                        turnIndex = (turnIndex + 1) % players.length;
+                        turnPhase = 'draw';
+                        broadcastState();
+                        if(players[turnIndex].isBot) setTimeout(() => doBotTurn(), 1500);
+                    }
+                }
+            }
+        }
+
+        // KLIENT/HOST: APLIKACJA STANU GRY (ODŚWIEŻANIE WIZUALNE)
+        function applyState(state) {
+            myHand = state.myHand;
+            myIndex = state.myIndex;
+            myTurn = state.playersInfo[myIndex].isTurn;
+            myTurnPhase = state.turnPhase;
+            
+            // Zachowaj zaznaczenia jeśli karta nadal w ręce
+            selectedCards = selectedCards.filter(id => myHand.some(c => c.id === id));
+            
             renderHand();
-            renderDiscardPile();
-            updateUI();
+            renderOpponents(state.playersInfo, myIndex);
+            
+            // Render Stosu Odrzuconych
+            const pileDiv = document.getElementById('discard-pile');
+            if(!state.discardPile || state.discardPile.length === 0) {
+                pileDiv.innerHTML = ''; pileDiv.className = 'card-pile discard-pile';
+            } else {
+                let tc = state.discardPile[state.discardPile.length-1];
+                pileDiv.className = `card-pile discard-pile ${tc.isJoker ? 'joker' : (tc.isRed ? 'red' : '')}`;
+                pileDiv.innerHTML = `<div class="card-corner"><span class="rank">${tc.isJoker ? '🃏' : tc.rank}</span><span class="suit">${tc.isJoker ? 'JOKER' : tc.suit}</span></div>`;
+            }
+
+            // Render Wyłożonych Układów
+            const meldsArea = document.getElementById('melds-area');
+            meldsArea.innerHTML = '';
+            if(state.melds) {
+                state.melds.forEach(grp => {
+                    let gDiv = document.createElement('div'); gDiv.className = 'meld-group';
+                    grp.forEach(c => { gDiv.innerHTML += createCardHTML(c, ''); });
+                    meldsArea.appendChild(gDiv);
+                });
+            }
+
+            // Update Przycisków
+            let status = document.getElementById('turn-status');
+            let deckEl = document.getElementById('deck-pile');
+            
+            if (myTurn) {
+                if (myTurnPhase === 'draw') {
+                    status.innerText = "Twój ruch - DOBIERZ KARTĘ"; status.style.color = "#4caf50";
+                    deckEl.style.boxShadow = "0 0 15px #fbc02d";
+                } else {
+                    status.innerText = "Twój ruch - WYŁÓŻ lub ODRZUĆ na stos"; status.style.color = "white";
+                    deckEl.style.boxShadow = "none";
+                }
+            } else {
+                let active = state.playersInfo.find(p => p.isTurn);
+                status.innerText = `Ruch gracza: ${active ? active.name : '...'}`;
+                status.style.color = "#aaa"; deckEl.style.boxShadow = "none";
+            }
+            updateActionButtons();
         }
 
         function createCardHTML(card, onClickFn) {
             let colorClass = card.isJoker ? 'joker' : (card.isRed ? 'red' : '');
-            let suitHTML = card.isJoker ? 'JOKER' : card.suit;
-            let rankHTML = card.isJoker ? '🃏' : card.rank;
-            return `<div class="card ${colorClass}" id="${card.id}" onclick="${onClickFn}">
-                        <div class="card-corner"><span class="rank">${rankHTML}</span><span class="suit">${suitHTML}</span></div>
+            let activeClass = selectedCards.includes(card.id) ? 'active' : '';
+            return `<div class="card ${colorClass} ${activeClass}" id="${card.id}" onclick="${onClickFn}">
+                        <div class="card-corner"><span class="rank">${card.isJoker ? '🃏' : card.rank}</span><span class="suit">${card.isJoker ? 'JOKER' : card.suit}</span></div>
                     </div>`;
         }
 
         function renderHand() {
             const handDiv = document.getElementById('my-hand');
             handDiv.innerHTML = '';
-            playerHand.forEach(card => {
-                handDiv.innerHTML += createCardHTML(card, `handleCardClick(this, '${card.id}')`);
-            });
+            myHand.forEach(c => { handDiv.innerHTML += createCardHTML(c, `handleCardClick(this, '${c.id}')`); });
         }
 
-        function renderDiscardPile() {
-            const pileDiv = document.getElementById('discard-pile');
-            if(discardPile.length === 0) {
-                pileDiv.innerHTML = '';
-                pileDiv.className = 'card-pile discard-pile';
-            } else {
-                let topCard = discardPile[discardPile.length-1];
-                let colorClass = topCard.isJoker ? 'joker' : (topCard.isRed ? 'red' : '');
-                let suitHTML = topCard.isJoker ? 'JOKER' : topCard.suit;
-                let rankHTML = topCard.isJoker ? '🃏' : topCard.rank;
-                pileDiv.className = `card-pile discard-pile ${colorClass}`;
-                pileDiv.innerHTML = `<div class="card-corner"><span class="rank">${rankHTML}</span><span class="suit">${suitHTML}</span></div>`;
-            }
-        }
-
-        function updateUI() {
-            let status = document.getElementById('turn-status');
+        function renderOpponents(playersInfo, myIdx) {
+            for(let i=2; i<=5; i++) document.getElementById('ui-player-'+i).style.display = 'none';
+            let slotNum = 2; // Slots order: 2 (left), 3 (top left), 4 (top right), 5 (right) depending on count
+            let mapSlots = playersInfo.length === 2 ? [3] : (playersInfo.length === 3 ? [2, 4] : (playersInfo.length === 4 ? [2,3,4] : [2,3,4,5]));
             
-            if (playerTurnPhase === 'draw') {
-                status.innerText = "Twój ruch - dobierz kartę z talii lub stosu.";
-                status.style.color = "#4caf50";
-                document.getElementById('deck-pile').style.boxShadow = "0 0 15px #fbc02d";
-                document.getElementById('btn-discard').disabled = true;
-            } else if (playerTurnPhase === 'discard') {
-                status.innerText = "Twój ruch - wyłóż układy lub odrzuć kartę by skończyć.";
-                status.style.color = "white";
-                document.getElementById('deck-pile').style.boxShadow = "none";
-                document.getElementById('btn-discard').disabled = getSelectedCards().length !== 1;
-            } else {
-                status.innerText = "Ruch przeciwnika... Czekaj.";
-                status.style.color = "#aaa";
-                document.getElementById('deck-pile').style.boxShadow = "none";
-                document.getElementById('btn-discard').disabled = true;
-            }
-
-            let sel = getSelectedCards();
-            if(playerTurnPhase === 'discard' && sel.length >= 3) {
-                document.getElementById('btn-meld').disabled = false;
-                document.getElementById('btn-meld').innerText = hasMelded ? "Wyłóż sekwens" : "Wyłóż (Min. 51)";
-            } else {
-                document.getElementById('btn-meld').disabled = true;
+            let drawn = 0;
+            for(let i=1; i<playersInfo.length; i++) {
+                let pIdx = (myIdx + i) % playersInfo.length;
+                let p = playersInfo[pIdx];
+                let slot = document.getElementById('ui-player-' + mapSlots[drawn]);
+                slot.style.display = 'block';
+                slot.innerHTML = `${p.name} <div class="card-count">🂠 ${p.cardCount}</div>`;
+                slot.style.border = p.isTurn ? "2px solid #fbc02d" : "1px solid rgba(255,255,255,0.2)";
+                drawn++;
             }
         }
 
-        // --- Logika Zaznaczania (wiele kart do wyłożenia) ---
-        function handleCardClick(element, id) {
-            if(playerTurnPhase === 'wait') return;
-            element.classList.toggle('active');
-            updateUI();
+        // AKCJE GRACZA
+        function handleCardClick(el, id) {
+            if (!myTurn || myTurnPhase === 'wait') return;
+            el.classList.toggle('active');
+            if (el.classList.contains('active')) selectedCards.push(id);
+            else selectedCards = selectedCards.filter(c => c !== id);
+            updateActionButtons();
         }
 
-        function getSelectedCards() {
-            let activeEls = document.querySelectorAll('#my-hand .card.active');
-            let ids = Array.from(activeEls).map(el => el.id);
-            return playerHand.filter(c => ids.includes(c.id));
+        function updateActionButtons() {
+            let bDisc = document.getElementById('btn-discard');
+            let bMeld = document.getElementById('btn-meld');
+            if (!myTurn || myTurnPhase === 'draw') { bDisc.disabled = true; bMeld.disabled = true; return; }
+            bDisc.disabled = (selectedCards.length !== 1);
+            bMeld.disabled = (selectedCards.length < 3);
         }
 
         function sortHand() {
-            playerHand.sort((a,b) => {
+            myHand.sort((a,b) => {
                 if(a.isJoker) return 1; if(b.isJoker) return -1;
                 if(a.suit === b.suit) return a.sVal - b.sVal;
                 return a.suit.localeCompare(b.suit);
             });
-            renderHand(); updateUI();
+            renderHand();
         }
 
-        function drawFromDeck() {
-            if(playerTurnPhase !== 'draw') { logErr("Dobierasz tylko na początku tury!"); return; }
-            if(deck.length === 0) recycleDiscardPile();
-            playerHand.push(deck.pop());
-            sysLog("Dobrałeś kartę z talii.");
-            playerTurnPhase = 'discard';
-            renderHand(); updateUI();
+        function drawFromDeck() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'draw'}); myTurnPhase='wait'; } }
+        function takeFromDiscard() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'take_discard'}); myTurnPhase='wait'; } }
+        function meldSelected() { if(myTurn && myTurnPhase === 'discard') { sendAction({type:'meld', cardIds: selectedCards}); selectedCards=[]; } }
+        function discardSelected() { if(myTurn && myTurnPhase === 'discard' && selectedCards.length === 1) { sendAction({type:'discard', cardId: selectedCards[0]}); selectedCards=[]; myTurnPhase='wait'; } }
+
+        function recycleDiscard() {
+            let top = discardPile.pop(); deck = discardPile; discardPile = [top];
+            for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
         }
 
-        function takeFromDiscard() {
-            if(playerTurnPhase !== 'draw') { logErr("Możesz pobierać ze stosu tylko na początku tury!"); return; }
-            if(discardPile.length === 0) return;
-            playerHand.push(discardPile.pop());
-            sysLog("Pobrałeś kartę ze stosu.");
-            playerTurnPhase = 'discard';
-            renderHand(); renderDiscardPile(); updateUI();
-        }
-
-        function recycleDiscardPile() {
-            let top = discardPile.pop();
-            deck = discardPile;
-            discardPile = [top];
-            for (let i = deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [deck[i], deck[j]] = [deck[j], deck[i]];
-            }
-        }
-
-        function meldSelected() {
-            let sel = getSelectedCards();
-            if(sel.length < 3) return;
-            
-            let pts = sel.reduce((sum, c) => sum + (c.isJoker ? 15 : c.nVal), 0);
-            let isClean = (sel.filter(c => c.isJoker).length === 0);
-
-            if(!hasMelded) {
-                if(pts < 51) { logErr(`Masz tylko ok. ${pts} pkt. Wymagane 51.`); return; }
-                if(!isClean && sel.length === 3) { logErr("Pierwsze wyłożenie wymaga czystego sekwensu!"); return; }
-                sysLog(`Wyłożyłeś się! (ok. ${pts} pkt)`);
-                hasMelded = true;
-            } else {
-                sysLog("Dodano układ.");
-            }
-
-            sel.forEach(c => { playerHand = playerHand.filter(hc => hc.id !== c.id); });
-            
-            let groupDiv = document.createElement('div');
-            groupDiv.className = 'meld-group';
-            sel.forEach(c => { groupDiv.innerHTML += createCardHTML(c, ''); });
-            document.getElementById('melds-area').appendChild(groupDiv);
-
-            renderHand(); updateUI(); checkWinCondition();
-        }
-
-        function discardSelected() {
-            let sel = getSelectedCards();
-            if(sel.length !== 1) return;
-            
-            let card = sel[0];
-            playerHand = playerHand.filter(c => c.id !== card.id);
-            discardPile.push(card);
-            
-            sysLog(`Odrzuciłeś kartę na stos.`);
-            renderHand(); renderDiscardPile();
-            
-            if(!checkWinCondition()) {
-                playerTurnPhase = 'wait';
-                updateUI();
-                simulateOpponentsTurns();
-            }
-        }
-
-        function checkWinCondition() {
-            if(playerHand.length === 0) {
-                endGame("WYGRAŁEŚ ROZDANIE!");
+        function checkWin(pIdx) {
+            if (players[pIdx].hand.length === 0) {
+                let scores = players.map(p => ({ name: p.name, score: p.hand.reduce((sum, c) => sum + (c.isJoker?30:(c.nVal||10)), 0) }));
+                broadcastEndGame(`WYGRAŁ: ${players[pIdx].name}!`, scores);
                 return true;
             }
             return false;
         }
 
-        // --- Symulacja ruchów przeciwników ---
-        function simulateOpponentsTurns() {
-            let delay = 1500;
-            // Dla tylu graczy ilu jest w pokoju
-            for(let i=2; i<=roomMaxPlayers; i++) {
+        // BOTA LOGIKA
+        function doBotTurn() {
+            let bot = players[turnIndex];
+            broadcastChat("System", "🤖 Komputer myśli...");
+            setTimeout(() => {
+                if (deck.length === 0) recycleDiscard();
+                bot.hand.push(deck.pop()); turnPhase = 'discard'; broadcastState();
+                
                 setTimeout(() => {
-                    let slotId = (roomMaxPlayers === 1) ? 3 : i; // Dla 1 os to komputer na slocie 3
-                    sysLog(`Gracz ${i} wykonuje ruch...`);
-                    
-                    // Dobiera
-                    if(deck.length === 0) recycleDiscardPile();
-                    deck.pop(); 
-                    
-                    setTimeout(() => {
-                        // 2% na nagłą wygraną bota
-                        if(deck.length < 50 && Math.random() < 0.02) {
-                            endGame(`GRACZ ${i} ZAKOŃCZYŁ GRĘ!`);
-                            return;
-                        }
-                        // Odrzuca
-                        discardPile.push(deck.pop());
-                        renderDiscardPile();
-                        sysLog(`Gracz ${i} wyrzucił kartę.`);
-                        
-                        // Zwracamy turę po ostatnim
-                        if(i === roomMaxPlayers) {
-                            setTimeout(() => {
-                                playerTurnPhase = 'draw';
-                                updateUI();
-                            }, 1000);
-                        }
-                    }, 1500);
-
-                }, delay);
-                delay += 3500;
-            }
+                    let dropIdx = Math.floor(Math.random() * bot.hand.length);
+                    discardPile.push(bot.hand.splice(dropIdx, 1)[0]);
+                    broadcastChat("System", "🤖 Komputer odrzucił kartę.");
+                    if (!checkWin(turnIndex)) {
+                        turnIndex = (turnIndex + 1) % players.length; turnPhase = 'draw'; broadcastState();
+                    }
+                }, 1500);
+            }, 1000);
         }
 
-        function endGame(winnerText) {
-            playerTurnPhase = 'wait';
+        // CHAT I WYSWIETLANIE WYNIKÓW
+        function broadcastEndGame(winTxt, scores) {
+            let packet = { type: 'end', winnerText: winTxt, scores: scores };
+            players.forEach((p, idx) => { if(idx === 0) showEndScreen(packet); else if(!p.isBot) p.conn.send(packet); });
+        }
+        function showEndScreen(data) {
             document.getElementById('end-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = winnerText;
-            
-            let pScore = playerHand.reduce((sum, c) => sum + c.nVal, 0);
-            let bScore = Math.floor(Math.random() * 90) + 10;
-            if(winnerText.includes("WYGRAŁEŚ")) bScore = Math.max(bScore, 30);
-            else pScore = Math.max(pScore, 10);
-
-            document.getElementById('score-player').innerText = pScore;
-            document.getElementById('score-bot').innerText = bScore;
+            document.getElementById('winner-text').innerText = data.winnerText;
+            let sb = document.getElementById('scores-list'); sb.innerHTML = '';
+            data.scores.forEach(s => { sb.innerHTML += `<div class="score-row"><span>${s.name}:</span> <strong>${s.score} pkt ujemnych</strong></div>`; });
         }
 
         function copyInvite() {
-            const inviteText = `Zagraj ze mną w Remika (stół na ${roomMaxPlayers} os.)! Kod: ${currentRoom}`;
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(inviteText).then(() => alert("Skopiowano kod!"));
-            } else {
-                let temp = document.createElement("input"); temp.value = inviteText;
-                document.body.appendChild(temp); temp.select(); document.execCommand("copy"); document.body.removeChild(temp);
-                alert("Skopiowano kod!");
-            }
+            let inviteText = `Dołącz do mojej gry w Mobtel Remik! Kod: ${currentRoom}`;
+            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(inviteText).then(() => alert("Skopiowano kod!"));
+            else { let t = document.createElement("input"); t.value = inviteText; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); alert("Skopiowano kod!"); }
         }
 
         function sendMessage() {
             const input = document.getElementById('chat-input');
-            if (input.value.trim()) {
-                const b = document.getElementById('chat-messages');
-                b.innerHTML += `<div class="msg"><span class="sender">Ty:</span> ${input.value.trim()}</div>`;
-                b.scrollTop = b.scrollHeight;
-                input.value = '';
-            }
+            if (input.value.trim()) { sendAction({ type: 'chat', text: input.value.trim() }); input.value = ''; }
         }
-        function sysLog(txt) {
-            const b = document.getElementById('chat-messages');
-            b.innerHTML += `<div class="msg system">${txt}</div>`;
-            b.scrollTop = b.scrollHeight;
+        function broadcastChat(sender, text) {
+            players.forEach((p, idx) => { if(idx === 0) addChat(sender, text, false); else if(!p.isBot) p.conn.send({ type: 'chat', sender: sender, text: text }); });
         }
-        function logErr(txt) {
-            const b = document.getElementById('chat-messages');
-            b.innerHTML += `<div class="msg error">${txt}</div>`;
-            b.scrollTop = b.scrollHeight;
+        function sendSystemMsg(pIdx, text) {
+            if(pIdx === 0) addChat("Błąd", text, true); else players[pIdx].conn.send({ type: 'error', text: text });
+        }
+        function addChat(sender, text, isError) {
+            let box = document.getElementById('chat-messages');
+            box.innerHTML += `<div class="msg ${isError?'error':(sender==='System'?'system':'')}"><span class="sender">${sender}:</span> ${text}</div>`;
+            box.scrollTop = box.scrollHeight;
         }
     </script>
 </body>
