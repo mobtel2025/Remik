@@ -38,7 +38,6 @@
             transition: 0.2s; color: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         button:active { transform: scale(0.96); box-shadow: 0 2px 3px rgba(0,0,0,0.3); }
-        button:disabled { background-color: #777; color: #aaa; cursor: not-allowed; box-shadow: none; opacity: 0.7;}
         
         input[type="text"], select {
             padding: 12px; font-size: 1.1em; border-radius: 6px; border: none;
@@ -106,7 +105,7 @@
         }
         
         .action-bar { display: flex; gap: 8px; margin-bottom: 5px; width: 95%; justify-content: center; }
-        .action-bar button { padding: 8px 10px; font-size: 0.85em; margin: 0; width: auto; flex: 1; }
+        .action-bar button { padding: 8px 10px; font-size: 0.85em; margin: 0; width: auto; flex: 1; transition: opacity 0.3s; }
 
         .status-label {
             background: rgba(0,0,0,0.8); padding: 3px 15px; border-radius: 10px; font-size: 0.85em;
@@ -227,7 +226,8 @@
 
             <div class="center-table">
                 <div class="card-pile deck" id="deck-pile" onclick="drawFromDeck()"></div>
-                <div class="card-pile discard-pile" id="discard-pile" onclick="takeFromDiscard()"></div>
+                <!-- Kliknięcie na stos odrzuconych obsługuje teraz pobieranie i wyrzucanie -->
+                <div class="card-pile discard-pile" id="discard-pile" onclick="handleDiscardPileClick()"></div>
             </div>
 
             <div class="melds-area" id="melds-area"></div>
@@ -239,8 +239,9 @@
                 
                 <div class="action-bar">
                     <button id="btn-sort" onclick="sortHand()">Sortuj</button>
-                    <button id="btn-meld" onclick="meldSelected()" disabled style="background-color: #4caf50; color: white;">Wyłóż (51+)</button>
-                    <button id="btn-discard" onclick="discardSelected()" disabled style="background-color: #ef5350; color: white;">Odrzuć</button>
+                    <!-- Przyciski straciły atrybut "disabled", logika kontrolowana jest przez JavaScript -->
+                    <button id="btn-meld" onclick="meldSelected()" style="background-color: #4caf50; color: white; opacity: 0.5;">Wyłóż (51+)</button>
+                    <button id="btn-discard" onclick="discardSelected()" style="background-color: #ef5350; color: white; opacity: 0.5;">Odrzuć</button>
                 </div>
 
                 <div class="hand-container">
@@ -264,7 +265,7 @@
             </div>
         </div>
 
-        <!-- Oczekiwanie na graczy Online Z POPRAWIIONYM PRZYCISKIEM -->
+        <!-- Oczekiwanie na graczy -->
         <div id="waiting-screen" class="overlay-screen">
             <div class="score-board">
                 <h2 style="color:var(--gold); margin-top:0;">Oczekiwanie na graczy</h2>
@@ -318,7 +319,6 @@
         let myIndex = -1;
         let selectedCards = [];
 
-        // Zmienna przechowująca referencje do okna, by zapobiegać błędom z wysyłaniem do Hosta, który zerwał
         let _connectedToHost = false;
 
         // STARTUJ JAKO HOST
@@ -327,7 +327,6 @@
             document.getElementById('my-name-label').innerText = `${playerName} (Twoje karty)`;
             
             if (roomMaxPlayers === 1) {
-                // Tryb lokalny z Botem
                 isHost = true; currentRoom = "LOKALNY";
                 players = [
                     { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false },
@@ -340,7 +339,6 @@
                 startGameHost();
                 
             } else {
-                // Prawdziwy Host P2P
                 currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
                 document.getElementById('lobby').innerHTML = `<div class="lobby-box"><h1>Zakładanie serwera...</h1><div class="loader"></div></div>`;
                 
@@ -381,7 +379,7 @@
                 peer.on('error', (err) => { 
                     console.error(err);
                     if (err.type === 'unavailable-id') {
-                        alert("Wygenerowany kod uległ konfliktowi w sieci. Przeładuj stronę i stwórz nowy.");
+                        alert("Kod uległ konfliktowi w sieci. Stwórz nowy.");
                         location.reload();
                     }
                 });
@@ -431,27 +429,25 @@
                 
                 hostConn.on('close', () => {
                     _connectedToHost = false;
-                    alert("Host zakończył sesję lub utracono połączenie z jego serwerem.");
+                    alert("Host zakończył sesję.");
                     location.reload();
                 });
             });
 
             peer.on('error', (err) => {
-                alert("Nie można odnaleźć tego stołu (Kod może być zły, lub host wyszedł z gry).");
+                alert("Nie można odnaleźć tego stołu.");
                 location.reload();
             });
         }
 
+        // POKAZYWANIE UI
         function showGameUI(room, capTxt, showCopyBtn) {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
             document.getElementById('waiting-screen').style.display = 'flex';
             document.getElementById('room-id-display').innerText = room;
             document.getElementById('room-capacity').innerText = capTxt;
-            
-            if (document.getElementById('waiting-room-code')) {
-                document.getElementById('waiting-room-code').innerText = room;
-            }
+            if (document.getElementById('waiting-room-code')) document.getElementById('waiting-room-code').innerText = room;
         }
 
         function updateWaitingScreen() {
@@ -461,7 +457,7 @@
             });
         }
 
-        // HOSTA LOGIKA: ROZDANIE KART I START
+        // HOSTA LOGIKA: ROZDANIE KART
         function startGameHost() {
             deck = []; discardPile = []; melds = [];
             for(let d=0; d<2; d++){
@@ -473,15 +469,12 @@
                 deck.push({ id: Math.random().toString(36).substr(2,9), suit: '★', rank: 'JOKER', isRed: false, isJoker: true, sVal: 15, nVal: 30 });
                 deck.push({ id: Math.random().toString(36).substr(2,9), suit: '★', rank: 'JOKER', isRed: true, isJoker: true, sVal: 15, nVal: 30 });
             }
-            // Tasowanie
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
 
             players.forEach(p => { for(let i=0; i<13; i++) p.hand.push(deck.pop()); });
-            
-            // Host (indeks 0) dostaje 14 kartę i od razu jest w fazie odrzucania
             players[0].hand.push(deck.pop());
             discardPile.push(deck.pop());
             
@@ -492,25 +485,19 @@
             broadcastState();
         }
 
-        // HOSTA LOGIKA: WYSYŁANIE STANU GRY
         function broadcastState() {
             if(!isHost) return;
             players.forEach((p, idx) => {
                 let packet = {
-                    type: 'state',
-                    turnPhase: turnPhase,
-                    discardPile: discardPile,
-                    melds: melds,
+                    type: 'state', turnPhase: turnPhase, discardPile: discardPile, melds: melds,
                     playersInfo: players.map((pl, i) => ({ name: pl.name, cardCount: pl.hand.length, isTurn: (i === turnIndex) })),
-                    myHand: p.hand,
-                    myIndex: idx
+                    myHand: p.hand, myIndex: idx
                 };
-                if(idx === 0) applyState(packet); // Host update lokalny
+                if(idx === 0) applyState(packet); 
                 else if(!p.isBot && p.conn) p.conn.send(packet);
             });
         }
 
-        // WYSYŁANIE AKCJI DO HOSTA
         function sendAction(actionObj) {
             if (isHost) processAction(actionObj, 0); 
             else if(hostConn && _connectedToHost) hostConn.send(actionObj);
@@ -543,13 +530,11 @@
                     let isClean = sel.every(c => !c.isJoker);
                     
                     if (!p.hasMelded && (pts < 51 || (!isClean && sel.length === 3))) {
-                        sendSystemMsg(pIdx, "Błąd: Potrzebujesz min. 51 punktów i Czystego Sekwensu (bez jokera).");
+                        sendSystemMsg(pIdx, "Potrzebujesz min. 51 punktów i Czystego Sekwensu, żeby się wyłożyć.");
                         return;
                     }
-                    
                     p.hand = p.hand.filter(c => !action.cardIds.includes(c.id));
-                    melds.push(sel);
-                    p.hasMelded = true;
+                    melds.push(sel); p.hasMelded = true;
                     broadcastChat("System", `${p.name} wyłożył układ na stół.`);
                     broadcastState();
                     checkWin(pIdx);
@@ -560,7 +545,6 @@
                 if (cIdx > -1) {
                     discardPile.push(p.hand.splice(cIdx, 1)[0]);
                     broadcastChat("System", `${p.name} zakończył turę.`);
-                    
                     if (!checkWin(pIdx)) {
                         turnIndex = (turnIndex + 1) % players.length;
                         turnPhase = 'draw';
@@ -571,7 +555,7 @@
             }
         }
 
-        // KLIENT/HOST: APLIKACJA STANU GRY (ODŚWIEŻANIE WIZUALNE)
+        // APLIKACJA STANU GRY (ODŚWIEŻANIE WIZUALNE)
         function applyState(state) {
             myHand = state.myHand;
             myIndex = state.myIndex;
@@ -579,14 +563,11 @@
             myTurnPhase = state.turnPhase;
             
             document.getElementById('room-capacity').innerText = `Graczy: ${state.playersInfo.length}`;
-            
-            // Zachowaj zaznaczenia jeśli karta nadal w ręce
             selectedCards = selectedCards.filter(id => myHand.some(c => c.id === id));
             
             renderHand();
             renderOpponents(state.playersInfo, myIndex);
             
-            // Render Stosu Odrzuconych
             const pileDiv = document.getElementById('discard-pile');
             if(!state.discardPile || state.discardPile.length === 0) {
                 pileDiv.innerHTML = ''; pileDiv.className = 'card-pile discard-pile';
@@ -596,7 +577,6 @@
                 pileDiv.innerHTML = `<div class="card-corner"><span class="rank">${tc.isJoker ? '🃏' : tc.rank}</span><span class="suit">${tc.isJoker ? 'JOKER' : tc.suit}</span></div>`;
             }
 
-            // Render Wyłożonych Układów
             const meldsArea = document.getElementById('melds-area');
             meldsArea.innerHTML = '';
             if(state.melds) {
@@ -656,9 +636,9 @@
             }
         }
 
-        // AKCJE GRACZA - Ulepszone Zaznaczanie i Sortowanie w ręce
+        // AKCJE GRACZA Z POPRAWIONYM ZAZNACZANIEM
         function handleCardClick(el, id) {
-            // Zamiana miejsc jeśli to nie nasza kolej, albo jeśli jesteśmy w fazie dobierania
+            // Zamiana miejsc
             if (!myTurn || myTurnPhase === 'draw') {
                 if(selectedCards.length === 1 && selectedCards[0] !== id) {
                     let idx1 = myHand.findIndex(c => c.id === selectedCards[0]);
@@ -675,40 +655,64 @@
             }
             
             // Faza odrzucania - zaznaczanie do akcji (wyłóż/odrzuć)
-            el.classList.toggle('active');
-            if (el.classList.contains('active')) {
-                selectedCards.push(id);
-            } else {
+            if (selectedCards.includes(id)) {
                 selectedCards = selectedCards.filter(c => c !== id);
+            } else {
+                selectedCards.push(id);
             }
-            
+            renderHand(); // Odrysowuje poprawnie nową listę zaznaczeń
             updateActionButtons();
         }
 
-        // Poprawiona ocena aktywności przycisków w czasie rzeczywistym
+        // Prawidłowe włączanie/wyłączanie przycisków w czasie rzeczywistym
         function updateActionButtons() {
             let bDisc = document.getElementById('btn-discard');
             let bMeld = document.getElementById('btn-meld');
             
             if (!myTurn || myTurnPhase === 'draw') { 
-                bDisc.disabled = true; bDisc.style.opacity = '0.5';
-                bMeld.disabled = true; bMeld.style.opacity = '0.5';
+                bDisc.style.opacity = '0.4'; bMeld.style.opacity = '0.4'; 
                 return; 
             }
             
-            // Odrzucenie: Dokładnie 1 karta
-            if(selectedCards.length === 1) {
-                bDisc.disabled = false; bDisc.style.opacity = '1';
-            } else {
-                bDisc.disabled = true; bDisc.style.opacity = '0.5';
+            bDisc.style.opacity = (selectedCards.length === 1) ? '1' : '0.4';
+            bMeld.style.opacity = (selectedCards.length >= 3) ? '1' : '0.4';
+        }
+
+        // Zunifikowana funkcja kliknięcia w stos odrzuconych
+        function handleDiscardPileClick() {
+            if (!myTurn) { sysLog("Poczekaj na swoją kolej."); return; }
+            if (myTurnPhase === 'draw') {
+                sendAction({type:'take_discard'}); myTurnPhase='wait'; updateActionButtons();
+            } else if (myTurnPhase === 'discard') {
+                discardSelected(); // Jeśli zaznaczył 1 kartę, to funkcja to przepuści
             }
+        }
+
+        function drawFromDeck() { 
+            if(!myTurn) { sysLog("Poczekaj na swoją kolej."); return; }
+            if(myTurnPhase !== 'draw') { sysLog("Musisz teraz ułożyć sekwens albo odrzucić kartę na stos."); return; }
+            sendAction({type:'draw'}); myTurnPhase='wait'; updateActionButtons(); 
+        }
+        
+        function meldSelected() { 
+            if (!myTurn) { sysLog("Poczekaj na swoją turę!"); return; }
+            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii lub stosu!"); return; }
+            if (selectedCards.length < 3) { sysLog("Zaznacz minimum 3 karty z ręki, aby je wyłożyć."); return; }
             
-            // Wyłożenie: Min 3 karty
-            if(selectedCards.length >= 3) {
-                bMeld.disabled = false; bMeld.style.opacity = '1';
-            } else {
-                bMeld.disabled = true; bMeld.style.opacity = '0.5';
-            }
+            sendAction({type:'meld', cardIds: selectedCards}); 
+            selectedCards=[]; 
+            updateActionButtons(); 
+        }
+        
+        function discardSelected() { 
+            if (!myTurn) { sysLog("Poczekaj na swoją turę!"); return; }
+            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii lub stosu!"); return; }
+            if (selectedCards.length !== 1) { sysLog("Musisz zaznaczyć tylko jedną kartę do wyrzucenia!"); return; }
+            
+            sendAction({type:'discard', cardId: selectedCards[0]}); 
+            selectedCards=[]; 
+            myTurnPhase='wait'; 
+            updateActionButtons(); 
         }
 
         function sortHand() {
@@ -717,22 +721,9 @@
                 if(a.suit === b.suit) return a.sVal - b.sVal;
                 return a.suit.localeCompare(b.suit);
             });
-            // Twardy reset zaznaczenia zapobiega błędom
-            selectedCards = []; 
+            selectedCards = []; // Usuwa problem zawieszonych przycisków po posortowaniu
             renderHand();
             updateActionButtons();
-        }
-
-        function drawFromDeck() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'draw'}); myTurnPhase='wait'; updateActionButtons(); } }
-        function takeFromDiscard() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'take_discard'}); myTurnPhase='wait'; updateActionButtons(); } }
-        function meldSelected() { if(myTurn && myTurnPhase === 'discard' && selectedCards.length >= 3) { sendAction({type:'meld', cardIds: selectedCards}); selectedCards=[]; updateActionButtons(); } }
-        function discardSelected() { 
-            if(myTurn && myTurnPhase === 'discard' && selectedCards.length === 1) { 
-                sendAction({type:'discard', cardId: selectedCards[0]}); 
-                selectedCards=[]; 
-                myTurnPhase='wait'; 
-                updateActionButtons(); 
-            } 
         }
 
         function recycleDiscard() {
@@ -794,7 +785,7 @@
             players.forEach((p, idx) => { if(idx === 0) addChat(sender, text, false); else if(!p.isBot && p.conn) p.conn.send({ type: 'chat', sender: sender, text: text }); });
         }
         function sendSystemMsg(pIdx, text) {
-            if(pIdx === 0) addChat("Błąd", text, true); else if(players[pIdx].conn) players[pIdx].conn.send({ type: 'error', text: text });
+            if(pIdx === 0) addChat("Info", text, true); else if(players[pIdx].conn) players[pIdx].conn.send({ type: 'error', text: text });
         }
         function addChat(sender, text, isError) {
             let box = document.getElementById('chat-messages');
