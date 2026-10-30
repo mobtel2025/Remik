@@ -274,7 +274,7 @@
                 <div class="loader"></div>
                 <p id="waiting-text" style="font-weight:bold;">Podłączono graczy: 1 / ?</p>
                 <p style="font-size:0.8em; color:#aaa; margin-top: 15px;" id="waiting-subtext">Wyślij znajomym powyższy kod.</p>
-                <p style="font-size:0.8em; color:#e53935;">Nie zamykaj tego okna, dopóki gra nie wystartuje.</p>
+                <p style="font-size:0.8em; color:#4caf50;">Oczekiwanie włączone bez limitu czasu. <br>Gra po cichu łączy się ponownie nawet jak zgaśnie ekran.</p>
             </div>
         </div>
 
@@ -317,6 +317,9 @@
         let myTurnPhase = 'wait';
         let myIndex = -1;
         let selectedCards = [];
+
+        // Zmienna przechowująca referencje do okna, by zapobiegać błędom z wysyłaniem do Hosta, który zerwał
+        let _connectedToHost = false;
 
         // STARTUJ JAKO HOST
         function startGame() {
@@ -373,7 +376,19 @@
                     });
                 });
                 
-                peer.on('error', (err) => { alert("Błąd połączenia: " + err.type); location.reload(); });
+                // Zabezpieczenie przed rozłączeniem Hosta
+                peer.on('disconnected', () => {
+                    console.log("Host odłączony od serwera sygnałowego, próba wznowienia...");
+                    peer.reconnect();
+                });
+                
+                peer.on('error', (err) => { 
+                    console.error(err);
+                    if (err.type === 'unavailable-id') {
+                        alert("Wygenerowany kod uległ konfliktowi w sieci. Przeładuj stronę i stwórz nowy.");
+                        location.reload();
+                    }
+                });
             }
         }
 
@@ -396,6 +411,7 @@
                 hostConn = peer.connect('mobtel-' + actualCode);
                 
                 hostConn.on('open', () => {
+                    _connectedToHost = true;
                     hostConn.send({ type: 'join', name: playerName });
                     currentRoom = actualCode.toUpperCase();
                     showGameUI(currentRoom, "Oczekiwanie na graczy", false);
@@ -403,7 +419,7 @@
                     document.getElementById('waiting-room-code').style.display = 'none';
                     document.getElementById('waiting-copy-btn').style.display = 'none';
                     document.getElementById('waiting-subtext').innerText = "Czekaj na rozpoczęcie gry przez hosta...";
-                    document.getElementById('waiting-text').innerText = "Łączenie...";
+                    document.getElementById('waiting-text').innerText = "Połączono, czekaj na innych...";
                 });
 
                 hostConn.on('data', (data) => {
@@ -416,10 +432,16 @@
                     else if (data.type === 'wait_update') document.getElementById('waiting-text').innerText = `Podłączono graczy: ${data.current} / ${data.max}`;
                     else if (data.type === 'end') showEndScreen(data);
                 });
+                
+                hostConn.on('close', () => {
+                    _connectedToHost = false;
+                    alert("Host zakończył sesję lub utracono połączenie z jego serwerem.");
+                    location.reload();
+                });
             });
 
             peer.on('error', (err) => {
-                alert("Nie można znaleźć stołu. Upewnij się, że kod jest poprawny, a host wciąż czeka.");
+                alert("Nie można odnaleźć tego stołu (Kod może być zły, lub host wyszedł z gry).");
                 location.reload();
             });
         }
@@ -489,14 +511,14 @@
                     myIndex: idx
                 };
                 if(idx === 0) applyState(packet); // Host update lokalny
-                else if(!p.isBot) p.conn.send(packet);
+                else if(!p.isBot && p.conn) p.conn.send(packet);
             });
         }
 
         // WYSYŁANIE AKCJI DO HOSTA
         function sendAction(actionObj) {
             if (isHost) processAction(actionObj, 0); 
-            else if(hostConn) hostConn.send(actionObj);
+            else if(hostConn && _connectedToHost) hostConn.send(actionObj);
         }
 
         // HOSTA LOGIKA: PRZETWARZANIE RUCHÓW
@@ -591,7 +613,7 @@
                 });
             }
 
-            // Update Przycisków
+            // Update Przycisków - POPRAWA: Klient też musi mieć aktywowane przyciski po odebraniu tury
             let status = document.getElementById('turn-status');
             let deckEl = document.getElementById('deck-pile');
             
@@ -627,7 +649,6 @@
 
         function renderOpponents(playersInfo, myIdx) {
             for(let i=2; i<=5; i++) document.getElementById('ui-player-'+i).style.display = 'none';
-            let slotNum = 2; 
             let mapSlots = playersInfo.length === 2 ? [3] : (playersInfo.length === 3 ? [2, 4] : (playersInfo.length === 4 ? [2,3,4] : [2,3,4,5]));
             
             let drawn = 0;
@@ -651,10 +672,21 @@
             updateActionButtons();
         }
 
+        // POPRAWA: Funkcja updateActionButtons teraz prawidłowo włącza/wyłącza przyciski dla klienta, kiedy ten otrzyma turę
         function updateActionButtons() {
             let bDisc = document.getElementById('btn-discard');
             let bMeld = document.getElementById('btn-meld');
-            if (!myTurn || myTurnPhase === 'draw') { bDisc.disabled = true; bMeld.disabled = true; return; }
+            
+            if (!myTurn) { 
+                bDisc.disabled = true; bMeld.disabled = true; 
+                return; 
+            }
+            if (myTurnPhase === 'draw') { 
+                bDisc.disabled = true; bMeld.disabled = true; 
+                return; 
+            }
+            
+            // Faza Discard - gracz może zaznaczać karty i działać
             bDisc.disabled = (selectedCards.length !== 1);
             bMeld.disabled = (selectedCards.length < 3);
         }
@@ -671,7 +703,14 @@
         function drawFromDeck() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'draw'}); myTurnPhase='wait'; } }
         function takeFromDiscard() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'take_discard'}); myTurnPhase='wait'; } }
         function meldSelected() { if(myTurn && myTurnPhase === 'discard') { sendAction({type:'meld', cardIds: selectedCards}); selectedCards=[]; } }
-        function discardSelected() { if(myTurn && myTurnPhase === 'discard' && selectedCards.length === 1) { sendAction({type:'discard', cardId: selectedCards[0]}); selectedCards=[]; myTurnPhase='wait'; } }
+        function discardSelected() { 
+            if(myTurn && myTurnPhase === 'discard' && selectedCards.length === 1) { 
+                sendAction({type:'discard', cardId: selectedCards[0]}); 
+                selectedCards=[]; 
+                myTurnPhase='wait'; 
+                updateActionButtons(); // Od razu zablokuj po kliknięciu
+            } 
+        }
 
         function recycleDiscard() {
             let top = discardPile.pop(); deck = discardPile; discardPile = [top];
@@ -709,7 +748,7 @@
         // CHAT I WYSWIETLANIE WYNIKÓW
         function broadcastEndGame(winTxt, scores) {
             let packet = { type: 'end', winnerText: winTxt, scores: scores };
-            players.forEach((p, idx) => { if(idx === 0) showEndScreen(packet); else if(!p.isBot) p.conn.send(packet); });
+            players.forEach((p, idx) => { if(idx === 0) showEndScreen(packet); else if(!p.isBot && p.conn) p.conn.send(packet); });
         }
         function showEndScreen(data) {
             document.getElementById('end-screen').style.display = 'flex';
@@ -729,14 +768,13 @@
             if (input.value.trim()) { sendAction({ type: 'chat', text: input.value.trim() }); input.value = ''; }
         }
         function broadcastChat(sender, text) {
-            players.forEach((p, idx) => { if(idx === 0) addChat(sender, text, false); else if(!p.isBot) p.conn.send({ type: 'chat', sender: sender, text: text }); });
+            players.forEach((p, idx) => { if(idx === 0) addChat(sender, text, false); else if(!p.isBot && p.conn) p.conn.send({ type: 'chat', sender: sender, text: text }); });
         }
         function sendSystemMsg(pIdx, text) {
-            if(pIdx === 0) addChat("Błąd", text, true); else players[pIdx].conn.send({ type: 'error', text: text });
+            if(pIdx === 0) addChat("Błąd", text, true); else if(players[pIdx].conn) players[pIdx].conn.send({ type: 'error', text: text });
         }
         function addChat(sender, text, isError) {
             let box = document.getElementById('chat-messages');
-            // Zastąpienie imienia gracza na "Ty" jeśli system o nim wspomina
             if (sender === "System" && text.includes(playerName)) {
                 text = text.replace(playerName, "Ty");
             }
