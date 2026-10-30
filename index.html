@@ -249,7 +249,7 @@
                     Pokój: <span id="room-id-display" style="color:var(--gold);">---</span><br>
                     <span id="room-capacity" style="color: #aaa;"></span>
                 </div>
-                <button class="btn-small" id="copy-btn" onclick="copyInvite()">Skopiuj Kod</button>
+                <button class="btn-small" id="copy-btn" onclick="copyInvite()" style="display:none;">Skopiuj Kod z Czatu</button>
             </div>
             <div id="chat-messages"></div>
             <div class="chat-input-area">
@@ -258,13 +258,16 @@
             </div>
         </div>
 
-        <!-- Oczekiwanie na graczy Online -->
+        <!-- Oczekiwanie na graczy Online Z POPRAWIIONYM PRZYCISKIEM -->
         <div id="waiting-screen" class="overlay-screen">
             <div class="score-board">
                 <h2 style="color:var(--gold); margin-top:0;">Oczekiwanie na graczy</h2>
+                <h1 style="letter-spacing: 5px; margin: 10px 0; font-size: 2.5em; color: white;" id="waiting-room-code">---</h1>
+                <button onclick="copyInvite()" style="margin-bottom: 20px; font-size: 1.2em; padding: 15px;">📋 Skopiuj Kod</button>
+                
                 <div class="loader"></div>
                 <p id="waiting-text" style="font-weight:bold;">Podłączono graczy: 1 / ?</p>
-                <p style="font-size:0.8em; color:#aaa; margin-top: 15px;">Wyślij znajomym kod widoczny nad czatem.</p>
+                <p style="font-size:0.8em; color:#aaa; margin-top: 15px;">Wyślij znajomym powyższy kod.</p>
                 <p style="font-size:0.8em; color:#e53935;">Nie zamykaj tego okna, dopóki gra nie wystartuje.</p>
             </div>
         </div>
@@ -337,7 +340,7 @@
                 peer.on('open', (id) => {
                     players = [ { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false } ];
                     gameStatePhase = 'lobby';
-                    showGameUI(currentRoom, `Miejsc: ${roomMaxPlayers}`, true);
+                    showGameUI(currentRoom, `Miejsc: ${roomMaxPlayers}`, false); // ukrywamy ten maly przycisk na czacie na rzecz tego wielkiego
                     updateWaitingScreen();
                 });
 
@@ -389,6 +392,10 @@
                     currentRoom = actualCode.toUpperCase();
                     showGameUI(currentRoom, "Oczekiwanie na Hosta", false);
                     document.getElementById('waiting-text').innerText = "Czekaj na rozpoczęcie...";
+                    
+                    // Ukryj duży kod dla gracza dołączającego (bo on i tak już wpisał)
+                    document.getElementById('waiting-room-code').style.display = 'none';
+                    document.querySelector('#waiting-screen button').style.display = 'none';
                 });
 
                 hostConn.on('data', (data) => {
@@ -416,7 +423,11 @@
             document.getElementById('waiting-screen').style.display = 'flex';
             document.getElementById('room-id-display').innerText = room;
             document.getElementById('room-capacity').innerText = capTxt;
-            document.getElementById('copy-btn').style.display = showCopyBtn ? 'block' : 'none';
+            
+            // Wyswietlanie Kodu na Waiting Screen
+            if (document.getElementById('waiting-room-code')) {
+                document.getElementById('waiting-room-code').innerText = room;
+            }
         }
 
         function updateWaitingScreen() {
