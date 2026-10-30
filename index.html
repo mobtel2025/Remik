@@ -113,8 +113,13 @@
             color: var(--gold); font-weight: bold; margin-bottom: 5px; border: 1px solid #444; text-align: center;
         }
 
+        .player-name-label {
+            background: rgba(0,0,0,0.6); padding: 2px 15px; border-radius: 10px 10px 0 0;
+            font-size: 0.8em; color: #fff; margin-bottom: 2px;
+        }
+
         .hand-container {
-            width: 100%; overflow-x: auto; overflow-y: visible; padding: 10px 15px 20px 15px;
+            width: 100%; overflow-x: auto; overflow-y: visible; padding: 5px 15px 20px 15px;
             box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--gold) rgba(0,0,0,0.3); min-height: 110px;
         }
         .hand { display: flex; justify-content: flex-start; width: max-content; margin: 0 auto; }
@@ -229,6 +234,7 @@
 
             <!-- Panel Gracza -->
             <div class="player-1" id="ui-player-1">
+                <div class="player-name-label" id="my-name-label">Ty (Ładowanie...)</div>
                 <div class="status-label" id="turn-status">Oczekiwanie...</div>
                 
                 <div class="action-bar">
@@ -263,11 +269,11 @@
             <div class="score-board">
                 <h2 style="color:var(--gold); margin-top:0;">Oczekiwanie na graczy</h2>
                 <h1 style="letter-spacing: 5px; margin: 10px 0; font-size: 2.5em; color: white;" id="waiting-room-code">---</h1>
-                <button onclick="copyInvite()" style="margin-bottom: 20px; font-size: 1.2em; padding: 15px;">📋 Skopiuj Kod</button>
+                <button id="waiting-copy-btn" onclick="copyInvite()" style="margin-bottom: 20px; font-size: 1.2em; padding: 15px;">📋 Skopiuj Kod</button>
                 
                 <div class="loader"></div>
                 <p id="waiting-text" style="font-weight:bold;">Podłączono graczy: 1 / ?</p>
-                <p style="font-size:0.8em; color:#aaa; margin-top: 15px;">Wyślij znajomym powyższy kod.</p>
+                <p style="font-size:0.8em; color:#aaa; margin-top: 15px;" id="waiting-subtext">Wyślij znajomym powyższy kod.</p>
                 <p style="font-size:0.8em; color:#e53935;">Nie zamykaj tego okna, dopóki gra nie wystartuje.</p>
             </div>
         </div>
@@ -315,10 +321,11 @@
         // STARTUJ JAKO HOST
         function startGame() {
             roomMaxPlayers = parseInt(document.getElementById('playerCount').value);
+            document.getElementById('my-name-label').innerText = `${playerName} (Twoje karty)`;
             
             if (roomMaxPlayers === 1) {
-                // Tryb lokalny z Botem (dla testów)
-                isHost = true; currentRoom = "LOKALNY"; playerName = "Ty";
+                // Tryb lokalny z Botem
+                isHost = true; currentRoom = "LOKALNY";
                 players = [
                     { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false },
                     { name: '🤖 Komputer', conn: null, hand: [], isBot: true, hasMelded: false }
@@ -340,7 +347,7 @@
                 peer.on('open', (id) => {
                     players = [ { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false } ];
                     gameStatePhase = 'lobby';
-                    showGameUI(currentRoom, `Miejsc: ${roomMaxPlayers}`, false); // ukrywamy ten maly przycisk na czacie na rzecz tego wielkiego
+                    showGameUI(currentRoom, `Miejsc: ${roomMaxPlayers}`, false); 
                     updateWaitingScreen();
                 });
 
@@ -350,14 +357,14 @@
                             if(players.length < roomMaxPlayers && gameStatePhase === 'lobby') {
                                 players.push({ name: data.name, conn: conn, hand: [], isBot: false, hasMelded: false });
                                 updateWaitingScreen();
-                                broadcastChat("System", `${data.name} połączył się z hostem.`);
+                                broadcastChat("System", `${data.name} dołączył(a) do gry.`);
                                 
                                 if(players.length === roomMaxPlayers) {
                                     gameStatePhase = 'playing';
                                     setTimeout(() => startGameHost(), 1500);
                                 }
                             } else {
-                                conn.send({ type: 'error', text: 'Pokój jest pełny lub gra wystartowała.' });
+                                conn.send({ type: 'error', text: 'Pokój jest pełny lub gra już trwa.' });
                             }
                         } else {
                             let idx = players.findIndex(p => p.conn === conn);
@@ -366,7 +373,7 @@
                     });
                 });
                 
-                peer.on('error', (err) => { alert("Błąd P2P: " + err.type); location.reload(); });
+                peer.on('error', (err) => { alert("Błąd połączenia: " + err.type); location.reload(); });
             }
         }
 
@@ -379,6 +386,7 @@
             let actualCode = match ? match[1] : codeInput;
             actualCode = actualCode.substring(0, 6).toLowerCase();
 
+            document.getElementById('my-name-label').innerText = `${playerName} (Twoje karty)`;
             document.getElementById('lobby').innerHTML = `<div class="lobby-box"><h1>Szukanie Hosta...</h1><div class="loader"></div></div>`;
             
             isHost = false;
@@ -390,12 +398,12 @@
                 hostConn.on('open', () => {
                     hostConn.send({ type: 'join', name: playerName });
                     currentRoom = actualCode.toUpperCase();
-                    showGameUI(currentRoom, "Oczekiwanie na Hosta", false);
-                    document.getElementById('waiting-text').innerText = "Czekaj na rozpoczęcie...";
+                    showGameUI(currentRoom, "Oczekiwanie na graczy", false);
                     
-                    // Ukryj duży kod dla gracza dołączającego (bo on i tak już wpisał)
                     document.getElementById('waiting-room-code').style.display = 'none';
-                    document.querySelector('#waiting-screen button').style.display = 'none';
+                    document.getElementById('waiting-copy-btn').style.display = 'none';
+                    document.getElementById('waiting-subtext').innerText = "Czekaj na rozpoczęcie gry przez hosta...";
+                    document.getElementById('waiting-text').innerText = "Łączenie...";
                 });
 
                 hostConn.on('data', (data) => {
@@ -411,7 +419,7 @@
             });
 
             peer.on('error', (err) => {
-                alert("Błąd połączenia. Upewnij się, że gospodarz stworzył stół i podał poprawny kod.");
+                alert("Nie można znaleźć stołu. Upewnij się, że kod jest poprawny, a host wciąż czeka.");
                 location.reload();
             });
         }
@@ -424,7 +432,6 @@
             document.getElementById('room-id-display').innerText = room;
             document.getElementById('room-capacity').innerText = capTxt;
             
-            // Wyswietlanie Kodu na Waiting Screen
             if (document.getElementById('waiting-room-code')) {
                 document.getElementById('waiting-room-code').innerText = room;
             }
@@ -464,7 +471,7 @@
             turnIndex = 0; turnPhase = 'discard'; 
 
             document.getElementById('waiting-screen').style.display = 'none';
-            broadcastChat("System", "Wszyscy są! Gra rozpoczęta. Gracz rozdający ma ruch.");
+            broadcastChat("System", "Wszyscy są! Gra rozpoczęta. Zaczyna host.");
             broadcastState();
         }
 
@@ -554,6 +561,9 @@
             myTurn = state.playersInfo[myIndex].isTurn;
             myTurnPhase = state.turnPhase;
             
+            // Wyłączamy "oczekiwanie na hosta" na dobre i ukrywamy guzik
+            document.getElementById('room-capacity').innerText = `Graczy: ${state.playersInfo.length}`;
+            
             // Zachowaj zaznaczenia jeśli karta nadal w ręce
             selectedCards = selectedCards.filter(id => myHand.some(c => c.id === id));
             
@@ -590,7 +600,7 @@
                     status.innerText = "Twój ruch - DOBIERZ KARTĘ"; status.style.color = "#4caf50";
                     deckEl.style.boxShadow = "0 0 15px #fbc02d";
                 } else {
-                    status.innerText = "Twój ruch - WYŁÓŻ lub ODRZUĆ na stos"; status.style.color = "white";
+                    status.innerText = "Twój ruch - WYŁÓŻ lub ODRZUĆ"; status.style.color = "white";
                     deckEl.style.boxShadow = "none";
                 }
             } else {
@@ -617,7 +627,7 @@
 
         function renderOpponents(playersInfo, myIdx) {
             for(let i=2; i<=5; i++) document.getElementById('ui-player-'+i).style.display = 'none';
-            let slotNum = 2; // Slots order: 2 (left), 3 (top left), 4 (top right), 5 (right) depending on count
+            let slotNum = 2; 
             let mapSlots = playersInfo.length === 2 ? [3] : (playersInfo.length === 3 ? [2, 4] : (playersInfo.length === 4 ? [2,3,4] : [2,3,4,5]));
             
             let drawn = 0;
@@ -671,7 +681,7 @@
         function checkWin(pIdx) {
             if (players[pIdx].hand.length === 0) {
                 let scores = players.map(p => ({ name: p.name, score: p.hand.reduce((sum, c) => sum + (c.isJoker?30:(c.nVal||10)), 0) }));
-                broadcastEndGame(`WYGRAŁ: ${players[pIdx].name}!`, scores);
+                broadcastEndGame(`WYGRAŁ(A): ${players[pIdx].name}!`, scores);
                 return true;
             }
             return false;
@@ -726,7 +736,12 @@
         }
         function addChat(sender, text, isError) {
             let box = document.getElementById('chat-messages');
-            box.innerHTML += `<div class="msg ${isError?'error':(sender==='System'?'system':'')}"><span class="sender">${sender}:</span> ${text}</div>`;
+            // Zastąpienie imienia gracza na "Ty" jeśli system o nim wspomina
+            if (sender === "System" && text.includes(playerName)) {
+                text = text.replace(playerName, "Ty");
+            }
+            
+            box.innerHTML += `<div class="msg ${isError?'error':(sender==='System'?'system':'')}"><span class="sender">${sender === playerName ? 'Ty' : sender}:</span> ${text}</div>`;
             box.scrollTop = box.scrollHeight;
         }
     </script>
