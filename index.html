@@ -38,7 +38,7 @@
             transition: 0.2s; color: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         button:active { transform: scale(0.96); box-shadow: 0 2px 3px rgba(0,0,0,0.3); }
-        button:disabled { background-color: #777; color: #aaa; cursor: not-allowed; box-shadow: none; }
+        button:disabled { background-color: #777; color: #aaa; cursor: not-allowed; box-shadow: none; opacity: 0.7;}
         
         input[type="text"], select {
             padding: 12px; font-size: 1.1em; border-radius: 6px; border: none;
@@ -376,11 +376,7 @@
                     });
                 });
                 
-                // Zabezpieczenie przed rozłączeniem Hosta
-                peer.on('disconnected', () => {
-                    console.log("Host odłączony od serwera sygnałowego, próba wznowienia...");
-                    peer.reconnect();
-                });
+                peer.on('disconnected', () => { peer.reconnect(); });
                 
                 peer.on('error', (err) => { 
                     console.error(err);
@@ -446,7 +442,6 @@
             });
         }
 
-        // POKAZYWANIE UI (Wspólne dla hosta i klienta)
         function showGameUI(room, capTxt, showCopyBtn) {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
@@ -555,7 +550,7 @@
                     p.hand = p.hand.filter(c => !action.cardIds.includes(c.id));
                     melds.push(sel);
                     p.hasMelded = true;
-                    broadcastChat("System", `${p.name} wyłożył grupę kart.`);
+                    broadcastChat("System", `${p.name} wyłożył układ na stół.`);
                     broadcastState();
                     checkWin(pIdx);
                 }
@@ -583,7 +578,6 @@
             myTurn = state.playersInfo[myIndex].isTurn;
             myTurnPhase = state.turnPhase;
             
-            // Wyłączamy "oczekiwanie na hosta" na dobre i ukrywamy guzik
             document.getElementById('room-capacity').innerText = `Graczy: ${state.playersInfo.length}`;
             
             // Zachowaj zaznaczenia jeśli karta nadal w ręce
@@ -613,7 +607,6 @@
                 });
             }
 
-            // Update Przycisków - POPRAWA: Klient też musi mieć aktywowane przyciski po odebraniu tury
             let status = document.getElementById('turn-status');
             let deckEl = document.getElementById('deck-pile');
             
@@ -663,32 +656,59 @@
             }
         }
 
-        // AKCJE GRACZA
+        // AKCJE GRACZA - Ulepszone Zaznaczanie i Sortowanie w ręce
         function handleCardClick(el, id) {
-            if (!myTurn || myTurnPhase === 'wait') return;
+            // Zamiana miejsc jeśli to nie nasza kolej, albo jeśli jesteśmy w fazie dobierania
+            if (!myTurn || myTurnPhase === 'draw') {
+                if(selectedCards.length === 1 && selectedCards[0] !== id) {
+                    let idx1 = myHand.findIndex(c => c.id === selectedCards[0]);
+                    let idx2 = myHand.findIndex(c => c.id === id);
+                    [myHand[idx1], myHand[idx2]] = [myHand[idx2], myHand[idx1]];
+                    selectedCards = [];
+                    renderHand();
+                } else {
+                    if(selectedCards.includes(id)) selectedCards = [];
+                    else selectedCards = [id];
+                    renderHand();
+                }
+                return;
+            }
+            
+            // Faza odrzucania - zaznaczanie do akcji (wyłóż/odrzuć)
             el.classList.toggle('active');
-            if (el.classList.contains('active')) selectedCards.push(id);
-            else selectedCards = selectedCards.filter(c => c !== id);
+            if (el.classList.contains('active')) {
+                selectedCards.push(id);
+            } else {
+                selectedCards = selectedCards.filter(c => c !== id);
+            }
+            
             updateActionButtons();
         }
 
-        // POPRAWA: Funkcja updateActionButtons teraz prawidłowo włącza/wyłącza przyciski dla klienta, kiedy ten otrzyma turę
+        // Poprawiona ocena aktywności przycisków w czasie rzeczywistym
         function updateActionButtons() {
             let bDisc = document.getElementById('btn-discard');
             let bMeld = document.getElementById('btn-meld');
             
-            if (!myTurn) { 
-                bDisc.disabled = true; bMeld.disabled = true; 
-                return; 
-            }
-            if (myTurnPhase === 'draw') { 
-                bDisc.disabled = true; bMeld.disabled = true; 
+            if (!myTurn || myTurnPhase === 'draw') { 
+                bDisc.disabled = true; bDisc.style.opacity = '0.5';
+                bMeld.disabled = true; bMeld.style.opacity = '0.5';
                 return; 
             }
             
-            // Faza Discard - gracz może zaznaczać karty i działać
-            bDisc.disabled = (selectedCards.length !== 1);
-            bMeld.disabled = (selectedCards.length < 3);
+            // Odrzucenie: Dokładnie 1 karta
+            if(selectedCards.length === 1) {
+                bDisc.disabled = false; bDisc.style.opacity = '1';
+            } else {
+                bDisc.disabled = true; bDisc.style.opacity = '0.5';
+            }
+            
+            // Wyłożenie: Min 3 karty
+            if(selectedCards.length >= 3) {
+                bMeld.disabled = false; bMeld.style.opacity = '1';
+            } else {
+                bMeld.disabled = true; bMeld.style.opacity = '0.5';
+            }
         }
 
         function sortHand() {
@@ -697,18 +717,21 @@
                 if(a.suit === b.suit) return a.sVal - b.sVal;
                 return a.suit.localeCompare(b.suit);
             });
+            // Twardy reset zaznaczenia zapobiega błędom
+            selectedCards = []; 
             renderHand();
+            updateActionButtons();
         }
 
-        function drawFromDeck() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'draw'}); myTurnPhase='wait'; } }
-        function takeFromDiscard() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'take_discard'}); myTurnPhase='wait'; } }
-        function meldSelected() { if(myTurn && myTurnPhase === 'discard') { sendAction({type:'meld', cardIds: selectedCards}); selectedCards=[]; } }
+        function drawFromDeck() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'draw'}); myTurnPhase='wait'; updateActionButtons(); } }
+        function takeFromDiscard() { if(myTurn && myTurnPhase === 'draw') { sendAction({type:'take_discard'}); myTurnPhase='wait'; updateActionButtons(); } }
+        function meldSelected() { if(myTurn && myTurnPhase === 'discard' && selectedCards.length >= 3) { sendAction({type:'meld', cardIds: selectedCards}); selectedCards=[]; updateActionButtons(); } }
         function discardSelected() { 
             if(myTurn && myTurnPhase === 'discard' && selectedCards.length === 1) { 
                 sendAction({type:'discard', cardId: selectedCards[0]}); 
                 selectedCards=[]; 
                 myTurnPhase='wait'; 
-                updateActionButtons(); // Od razu zablokuj po kliknięciu
+                updateActionButtons(); 
             } 
         }
 
@@ -778,7 +801,6 @@
             if (sender === "System" && text.includes(playerName)) {
                 text = text.replace(playerName, "Ty");
             }
-            
             box.innerHTML += `<div class="msg ${isError?'error':(sender==='System'?'system':'')}"><span class="sender">${sender === playerName ? 'Ty' : sender}:</span> ${text}</div>`;
             box.scrollTop = box.scrollHeight;
         }
