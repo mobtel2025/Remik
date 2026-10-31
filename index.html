@@ -56,7 +56,7 @@
         }
 
         .watermark {
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
             font-size: 4em; font-weight: 900; color: rgba(255, 255, 255, 0.06);
             text-align: center; pointer-events: none; z-index: 0; line-height: 1;
         }
@@ -68,14 +68,14 @@
         }
         .card-count { color: var(--gold); font-weight: bold; margin-top: 2px; font-size: 1.1em; }
 
-        .player-2 { left: 10px; top: 30%; transform: translateY(-50%); } 
+        .player-2 { left: 10px; top: 25%; transform: translateY(-50%); } 
         .player-3 { top: 10px; left: 50%; transform: translateX(-50%); } 
         .player-4 { top: 10px; right: 20%; transform: translateX(50%); } 
-        .player-5 { right: 10px; top: 30%; transform: translateY(-50%); } 
+        .player-5 { right: 10px; top: 25%; transform: translateY(-50%); } 
 
         .center-table {
             display: flex; gap: 15px; background: rgba(0,0,0,0.3); padding: 15px;
-            border-radius: 15px; z-index: 2; transform: translateY(-20px);
+            border-radius: 15px; z-index: 2; position: absolute; top: 35%; transform: translateY(-50%);
         }
         
         .card-pile {
@@ -89,15 +89,33 @@
         .deck::after { content: "TALIA"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; pointer-events: none; }
         .discard-pile::after { content: "STOS"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; pointer-events: none; }
 
+        /* ULEPSZONY STÓŁ NA WYŁOŻONE KARTY (Wieloliniowy, responsywny) */
         .melds-area {
-            position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; height: 100px; display: flex; gap: 15px; overflow-x: auto; align-items: center; z-index: 2;
+            position: absolute; top: 58%; left: 50%; transform: translateX(-50%);
+            width: 95%; height: 180px; display: flex; flex-wrap: wrap; justify-content: center;
+            align-content: flex-start; gap: 10px; overflow-y: auto; z-index: 2;
+            pointer-events: none; /* przepuszcza kliknięcia na stół pod spodem */
+            scrollbar-width: none;
         }
+        
         .meld-group {
-            display: flex; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.3);
+            display: flex; background: rgba(255,255,255,0.15); padding: 5px 8px; border-radius: 8px; 
+            border: 2px dashed rgba(255,255,255,0.4); cursor: pointer; transition: 0.2s;
+            pointer-events: auto; /* ten element przyjmuje kliknięcia (dokładanie) */
+            height: fit-content; margin-bottom: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .meld-group .card { margin-right: -25px; transform: scale(0.8); transform-origin: left center; }
+        .meld-group:active { transform: scale(0.95); background: rgba(255,255,255,0.3); border-color: var(--gold); }
+        
+        /* Nadpisanie wielkości kart w meldach żeby lepiej się mieściły na ekranie */
+        .meld-group .card {
+            width: 38px; height: 56px; margin-right: -18px; 
+            box-shadow: -2px 0 4px rgba(0,0,0,0.4); border-radius: 4px;
+            padding: 2px;
+        }
         .meld-group .card:last-child { margin-right: 0; }
+        .meld-group .card-corner { width: 16px; }
+        .meld-group .card-corner .rank { font-size: 0.95em; }
+        .meld-group .card-corner .suit { font-size: 0.9em; margin-top: -3px; }
 
         /* Panel Gracza */
         .player-1 { 
@@ -124,7 +142,7 @@
         }
         .hand { display: flex; justify-content: flex-start; width: max-content; margin: 0 auto; }
         
-        /* Wygląd Kart */
+        /* Wygląd Kart w Ręce */
         .card {
             width: 55px; height: 80px; background: white; border-radius: 6px; color: black;
             border: 1px solid #666; margin-right: -32px; box-shadow: -3px 0 6px rgba(0,0,0,0.4);
@@ -145,7 +163,7 @@
 
         /* Chat Area */
         #chat-area {
-            width: 100%; height: 30vh; background-color: var(--chat-bg); display: flex; flex-direction: column; border-top: 2px solid #555; z-index: 20;
+            width: 100%; height: 25vh; background-color: var(--chat-bg); display: flex; flex-direction: column; border-top: 2px solid #555; z-index: 20;
         }
         .chat-header { padding: 5px 10px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         .chat-header-info { font-size: 0.8em; }
@@ -210,7 +228,7 @@
             
             <button onclick="startGame()">Stwórz stół jako HOST</button>
             <p style="margin: 15px 0; color: #999; font-size: 0.9em;">- LUB DOŁĄCZ -</p>
-            <input type="text" id="joinCode" placeholder="Wpisz 4-cyfrowy PIN...">
+            <input type="text" id="joinCode" placeholder="Wpisz otrzymany PIN...">
             <button onclick="joinRoom()" style="background-color: #4caf50; color: white;">Dołącz do znajomego</button>
         </div>
     </div>
@@ -219,7 +237,6 @@
         <div id="table-area">
             <div class="watermark">MOBTEL<br>REMIK</div>
 
-            <!-- Przeciwnicy (wyświetlani dynamicznie) -->
             <div class="player-slot player-2" id="ui-player-2"></div>
             <div class="player-slot player-3" id="ui-player-3"></div>
             <div class="player-slot player-4" id="ui-player-4"></div>
@@ -227,9 +244,11 @@
 
             <div class="center-table">
                 <div class="card-pile deck" id="deck-pile" onclick="drawFromDeck()"></div>
+                <!-- Kliknięcie na stos odrzuconych obsługuje teraz pobieranie i wyrzucanie -->
                 <div class="card-pile discard-pile" id="discard-pile" onclick="handleDiscardPileClick()"></div>
             </div>
 
+            <!-- Stół na wyłożone układy (Melds) -->
             <div class="melds-area" id="melds-area"></div>
 
             <!-- Panel Gracza -->
@@ -239,8 +258,9 @@
                 
                 <div class="action-bar">
                     <button id="btn-sort" onclick="sortHand()">Sortuj</button>
-                    <button id="btn-meld" onclick="meldSelected()" disabled style="background-color: #4caf50; color: white; opacity: 0.5;">Wyłóż (51+)</button>
-                    <button id="btn-discard" onclick="discardSelected()" disabled style="background-color: #ef5350; color: white; opacity: 0.5;">Odrzuć</button>
+                    <!-- Przyciski straciły atrybut "disabled", logika kontrolowana jest przez JavaScript -->
+                    <button id="btn-meld" onclick="meldSelected()" style="background-color: #4caf50; color: white; opacity: 0.5;">Wyłóż (51+)</button>
+                    <button id="btn-discard" onclick="discardSelected()" style="background-color: #ef5350; color: white; opacity: 0.5;">Odrzuć</button>
                 </div>
 
                 <div class="hand-container">
@@ -258,7 +278,7 @@
                 <button class="btn-small" id="copy-btn" onclick="copyInvite()" style="display:none;">Skopiuj PIN z Czatu</button>
             </div>
             <div id="chat-messages">
-                <div class="msg system">Porada: Aby odrzucić kartę, zaznacz ją i kliknij w stos na stole, albo użyj przycisku.</div>
+                <div class="msg system">Porada: Aby odrzucić, zaznacz 1 kartę i kliknij STOS na stole. Aby dołożyć do sekwensu, zaznacz kartę i tapnij w układ na stole.</div>
             </div>
             <div class="chat-input-area">
                 <input type="text" id="chat-input" placeholder="Wiadomość..." onkeypress="if(event.key==='Enter') sendMessage()">
@@ -336,7 +356,6 @@
                 document.getElementById('waiting-screen').style.display = 'none';
                 startGameHost();
             } else {
-                // GENEROWANIE KRÓTKIEGO PINU (4 CYFRY) ZAMIAST 6 LITER
                 currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
                 document.getElementById('lobby').innerHTML = `<div class="lobby-box"><h1>Zakładanie serwera...</h1><div class="loader"></div></div>`;
                 
@@ -389,7 +408,6 @@
             
             let match = codeInput.match(/KOD:\s*([A-Z0-9]+)/i) || codeInput.match(/TO:\s*([A-Z0-9]+)/i);
             let actualCode = match ? match[1] : codeInput;
-            // Obsługa wpisywania mniejszej ilości znaków i wyciągania samych cyfr
             actualCode = actualCode.replace(/[^0-9a-zA-Z]/g, '').substring(0, 4).toLowerCase();
 
             document.getElementById('my-name-label').innerText = `${playerName} (Twoje karty)`;
@@ -498,6 +516,39 @@
             else if(hostConn && _connectedToHost) hostConn.send(actionObj);
         }
 
+        // --- WALIDACJA REGUŁ REMIKA ---
+        function isValidMeldCheck(cardsArray) {
+            let norms = cardsArray.filter(c => !c.isJoker);
+            let jCount = cardsArray.filter(c => c.isJoker).length;
+            if(norms.length === 0) return false; 
+            
+            // Zestaw (Group): te same figury, różne kolory
+            if(norms.every(c => c.rank === norms[0].rank)) {
+                let uniqueSuits = new Set(norms.map(c => c.suit));
+                if(uniqueSuits.size === norms.length && cardsArray.length <= 4) return true;
+            }
+            
+            // Sekwens (Sequence): ten sam kolor, po kolei
+            let checkSeq = (valMap) => {
+                let sorted = [...norms].sort((a,b) => valMap(a) - valMap(b));
+                if(!sorted.every(c => c.suit === sorted[0].suit)) return false; 
+                
+                let jNeeded = 0;
+                for(let i=1; i<sorted.length; i++){
+                    let diff = valMap(sorted[i]) - valMap(sorted[i-1]);
+                    if(diff <= 0) return false; // duplikat lub błąd
+                    jNeeded += (diff - 1);
+                }
+                return jNeeded <= jCount;
+            };
+            
+            if(checkSeq(c => c.sVal)) return true;
+            if(checkSeq(c => c.rank === 'A' ? 1 : c.sVal)) return true; // As jako 1
+            
+            return false;
+        }
+
+        // HOSTA LOGIKA: PRZETWARZANIE RUCHÓW
         function processAction(action, pIdx) {
             if (action.type === 'chat') { broadcastChat(players[pIdx].name, action.text); return; }
             if (pIdx !== turnIndex) return; 
@@ -520,14 +571,28 @@
             else if (action.type === 'meld' && turnPhase === 'discard') {
                 let sel = p.hand.filter(c => action.cardIds.includes(c.id));
                 if (sel.length >= 3) {
+                    
+                    if (!isValidMeldCheck(sel)) {
+                        sendSystemMsg(pIdx, "Błąd: To nie jest poprawny sekwens ani zestaw!");
+                        return;
+                    }
+
                     let pts = sel.reduce((sum, c) => sum + (c.isJoker ? 15 : c.nVal), 0);
                     let isClean = sel.every(c => !c.isJoker);
                     
-                    if (!p.hasMelded && (pts < 51 || (!isClean && sel.length === 3))) {
-                        sendSystemMsg(pIdx, "Najpierw musisz się wyłożyć - czysty sekwens i min. 51 punktów.");
+                    if (!p.hasMelded && (pts < 51 || !isClean)) {
+                        sendSystemMsg(pIdx, "Pierwsze wyłożenie: Wymagane min. 51 punktów i Czysty Sekwens (bez jokera).");
                         return;
                     }
+                    
                     p.hand = p.hand.filter(c => !action.cardIds.includes(c.id));
+                    
+                    // Sortowanie do poprawnego wyświetlania
+                    sel.sort((a,b) => {
+                        if(a.isJoker) return 1; if(b.isJoker) return -1;
+                        return a.sVal - b.sVal;
+                    });
+                    
                     melds.push(sel); p.hasMelded = true;
                     broadcastChat("System", `${p.name} wyłożył układ na stół.`);
                     broadcastState();
@@ -536,13 +601,27 @@
             }
             else if (action.type === 'add_to_meld' && turnPhase === 'discard') {
                 if (!p.hasMelded) {
-                    sendSystemMsg(pIdx, "Zanim dołożysz kartę, musisz się poprawnie wyłożyć (51+ pkt).");
+                    sendSystemMsg(pIdx, "Zanim dołożysz kartę do innych układów, musisz najpierw wyłożyć własny (min. 51 pkt)!");
                     return;
                 }
                 let sel = p.hand.filter(c => action.cardIds.includes(c.id));
                 if (sel.length > 0 && melds[action.meldIndex]) {
+                    
+                    let proposedMeld = [...melds[action.meldIndex], ...sel];
+                    
+                    if (!isValidMeldCheck(proposedMeld)) {
+                        sendSystemMsg(pIdx, "Błąd: Wybrane karty łamią zasady tego układu (nie pasuje kolor, ranga lub robi się duplikat).");
+                        return;
+                    }
+
                     p.hand = p.hand.filter(c => !action.cardIds.includes(c.id));
-                    melds[action.meldIndex].push(...sel);
+                    
+                    proposedMeld.sort((a,b) => {
+                        if(a.isJoker) return 1; if(b.isJoker) return -1;
+                        return a.sVal - b.sVal;
+                    });
+                    
+                    melds[action.meldIndex] = proposedMeld;
                     broadcastChat("System", `${p.name} dołożył kartę do układu na stole.`);
                     broadcastState();
                     checkWin(pIdx);
@@ -563,6 +642,7 @@
             }
         }
 
+        // APLIKACJA STANU GRY
         function applyState(state) {
             myHand = state.myHand;
             myIndex = state.myIndex;
@@ -644,10 +724,17 @@
             }
         }
 
+        // AKCJE GRACZA I DOKŁADANIE DO MELDU
         function handleMeldClick(meldIdx) {
             if (!myTurn) return;
-            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii!"); return; }
-            if (selectedCards.length === 0) { sysLog("Zaznacz kartę w ręce, żeby ją dołożyć do układu na stole."); return; }
+            if (myTurnPhase === 'draw') {
+                sysLog("Najpierw dobierz kartę z talii!");
+                return;
+            }
+            if (selectedCards.length === 0) {
+                sysLog("Zaznacz kartę w ręce, żeby ją dołożyć do układu na stole.");
+                return;
+            }
             
             sendAction({type: 'add_to_meld', cardIds: selectedCards, meldIndex: meldIdx});
             selectedCards = [];
@@ -655,71 +742,92 @@
         }
 
         function handleCardClick(el, id) {
+            // Zamiana miejsc
             if (!myTurn || myTurnPhase === 'draw') {
                 if(selectedCards.length === 1 && selectedCards[0] !== id) {
                     let idx1 = myHand.findIndex(c => c.id === selectedCards[0]);
                     let idx2 = myHand.findIndex(c => c.id === id);
                     [myHand[idx1], myHand[idx2]] = [myHand[idx2], myHand[idx1]];
-                    selectedCards = []; renderHand();
+                    selectedCards = [];
+                    renderHand();
                 } else {
-                    if(selectedCards.includes(id)) selectedCards = []; else selectedCards = [id];
+                    if(selectedCards.includes(id)) selectedCards = [];
+                    else selectedCards = [id];
                     renderHand();
                 }
                 return;
             }
             
-            if (selectedCards.includes(id)) { selectedCards = selectedCards.filter(c => c !== id); } 
-            else { selectedCards.push(id); }
-            renderHand(); updateActionButtons();
+            // Faza odrzucania - zaznaczanie do akcji (wyłóż/odrzuć)
+            if (selectedCards.includes(id)) {
+                selectedCards = selectedCards.filter(c => c !== id);
+            } else {
+                selectedCards.push(id);
+            }
+            renderHand(); // Odrysowuje poprawnie nową listę zaznaczeń
+            updateActionButtons();
         }
 
+        // Prawidłowe włączanie/wyłączanie przycisków w czasie rzeczywistym
         function updateActionButtons() {
             let bDisc = document.getElementById('btn-discard');
             let bMeld = document.getElementById('btn-meld');
             
             if (!myTurn || myTurnPhase === 'draw') { 
                 bDisc.style.opacity = '0.4'; bMeld.style.opacity = '0.4'; 
-                bDisc.disabled = true; bMeld.disabled = true;
                 return; 
             }
             
-            bDisc.disabled = (selectedCards.length !== 1);
-            bDisc.style.opacity = (selectedCards.length === 1) ? '1' : '0.4';
-            bMeld.disabled = (selectedCards.length < 3);
-            bMeld.style.opacity = (selectedCards.length >= 3) ? '1' : '0.4';
+            // Odrzucenie: Dokładnie 1 karta
+            if(selectedCards.length === 1) {
+                bDisc.disabled = false; bDisc.style.opacity = '1';
+            } else {
+                bDisc.disabled = true; bDisc.style.opacity = '0.4';
+            }
+            
+            // Wyłożenie: Min 3 karty
+            if(selectedCards.length >= 3) {
+                bMeld.disabled = false; bMeld.style.opacity = '1';
+            } else {
+                bMeld.disabled = true; bMeld.style.opacity = '0.4';
+            }
         }
 
+        // Zunifikowana funkcja kliknięcia w stos odrzuconych
         function handleDiscardPileClick() {
-            if (!myTurn) { sysLog("Poczekaj na swoją kolej."); return; }
+            if (!myTurn) { sysLog("To nie jest Twój ruch."); return; }
             if (myTurnPhase === 'draw') {
                 sendAction({type:'take_discard'}); myTurnPhase='wait'; updateActionButtons();
             } else if (myTurnPhase === 'discard') {
-                discardSelected(); 
+                discardSelected(); // Jeśli zaznaczył 1 kartę, to funkcja to przepuści, jeśli złą liczbę kart, wyświetli komunikat
             }
         }
 
         function drawFromDeck() { 
-            if(!myTurn) { sysLog("Poczekaj na swoją kolej."); return; }
-            if(myTurnPhase !== 'draw') { sysLog("Już dobrałeś kartę. Wyłóż się lub odrzuć kartę na stos."); return; }
+            if(!myTurn) { sysLog("Poczekaj na swoją turę."); return; }
+            if(myTurnPhase !== 'draw') { sysLog("Najpierw wyłóż układ z ręki lub odrzuć jedną kartę."); return; }
             sendAction({type:'draw'}); myTurnPhase='wait'; updateActionButtons(); 
         }
         
         function meldSelected() { 
-            if (!myTurn) { sysLog("To nie Twoja tura!"); return; }
+            if (!myTurn) { sysLog("To nie jest Twój ruch!"); return; }
             if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii!"); return; }
-            if (selectedCards.length < 3) { sysLog("Zaznacz min. 3 karty do wyłożenia."); return; }
+            if (selectedCards.length < 3) { sysLog("Zaznacz min. 3 karty z ręki, aby je wyłożyć."); return; }
             
             sendAction({type:'meld', cardIds: selectedCards}); 
-            selectedCards=[]; updateActionButtons(); 
+            selectedCards=[]; 
+            updateActionButtons(); 
         }
         
         function discardSelected() { 
-            if (!myTurn) { sysLog("To nie Twoja tura!"); return; }
+            if (!myTurn) { sysLog("To nie jest Twój ruch!"); return; }
             if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii!"); return; }
-            if (selectedCards.length !== 1) { sysLog("Wybierz 1 kartę, aby ją odrzucić i zakończyć turę."); return; }
+            if (selectedCards.length !== 1) { sysLog("Zaznacz dokładnie 1 kartę, aby zakończyć turę."); return; }
             
             sendAction({type:'discard', cardId: selectedCards[0]}); 
-            selectedCards=[]; myTurnPhase='wait'; updateActionButtons(); 
+            selectedCards=[]; 
+            myTurnPhase='wait'; 
+            updateActionButtons(); 
         }
 
         function sortHand() {
@@ -728,7 +836,10 @@
                 if(a.suit === b.suit) return a.sVal - b.sVal;
                 return a.suit.localeCompare(b.suit);
             });
-            selectedCards = []; renderHand(); updateActionButtons();
+            // Twardy reset zaznaczenia zapobiega błędom
+            selectedCards = []; 
+            renderHand();
+            updateActionButtons();
         }
 
         function recycleDiscard() {
@@ -745,6 +856,7 @@
             return false;
         }
 
+        // BOTA LOGIKA
         function doBotTurn() {
             let bot = players[turnIndex];
             broadcastChat("System", "🤖 Komputer myśli...");
@@ -763,6 +875,7 @@
             }, 1000);
         }
 
+        // CHAT I WYSWIETLANIE WYNIKÓW
         function broadcastEndGame(winTxt, scores) {
             let packet = { type: 'end', winnerText: winTxt, scores: scores };
             players.forEach((p, idx) => { if(idx === 0) showEndScreen(packet); else if(!p.isBot && p.conn) p.conn.send(packet); });
@@ -775,7 +888,7 @@
         }
 
         function copyInvite() {
-            let inviteText = `Zagraj ze mną w Remika (stół na ${roomMaxPlayers} osób). PIN do gry: ${currentRoom}`;
+            let inviteText = `Dołącz do mojej gry w Mobtel Remik! Kod: ${currentRoom}`;
             if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(inviteText).then(() => alert("Skopiowano kod!"));
             else { let t = document.createElement("input"); t.value = inviteText; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); alert("Skopiowano kod!"); }
         }
@@ -792,7 +905,9 @@
         }
         function addChat(sender, text, isError) {
             let box = document.getElementById('chat-messages');
-            if (sender === "System" && text.includes(playerName)) { text = text.replace(playerName, "Ty"); }
+            if (sender === "System" && text.includes(playerName)) {
+                text = text.replace(playerName, "Ty");
+            }
             box.innerHTML += `<div class="msg ${isError?'error':(sender==='System'?'system':'')}"><span class="sender">${sender === playerName ? 'Ty' : sender}:</span> ${text}</div>`;
             box.scrollTop = box.scrollHeight;
         }
