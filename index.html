@@ -38,6 +38,7 @@
             transition: 0.2s; color: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         button:active { transform: scale(0.96); box-shadow: 0 2px 3px rgba(0,0,0,0.3); }
+        button:disabled { background-color: #777; color: #aaa; cursor: not-allowed; box-shadow: none; opacity: 0.7;}
         
         input[type="text"], select {
             padding: 12px; font-size: 1.1em; border-radius: 6px; border: none;
@@ -85,8 +86,8 @@
         }
         .card-pile:active { transform: scale(0.9); }
         .deck { background: repeating-linear-gradient(45deg, #0d47a1, #0d47a1 8px, #fff 8px, #fff 16px); color: transparent; }
-        .deck::after { content: "TALIA"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; }
-        .discard-pile::after { content: "STOS"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; }
+        .deck::after { content: "TALIA"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; pointer-events: none; }
+        .discard-pile::after { content: "STOS"; color: white; background: rgba(0,0,0,0.7); position: absolute; font-size: 0.4em; bottom: 5px; padding: 2px 4px; border-radius: 3px; pointer-events: none; }
 
         .melds-area {
             position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
@@ -209,7 +210,7 @@
             
             <button onclick="startGame()">Stwórz stół jako HOST</button>
             <p style="margin: 15px 0; color: #999; font-size: 0.9em;">- LUB DOŁĄCZ -</p>
-            <input type="text" id="joinCode" placeholder="Wpisz otrzymany kod...">
+            <input type="text" id="joinCode" placeholder="Wpisz 4-cyfrowy PIN...">
             <button onclick="joinRoom()" style="background-color: #4caf50; color: white;">Dołącz do znajomego</button>
         </div>
     </div>
@@ -226,7 +227,6 @@
 
             <div class="center-table">
                 <div class="card-pile deck" id="deck-pile" onclick="drawFromDeck()"></div>
-                <!-- Kliknięcie na stos odrzuconych obsługuje teraz pobieranie i wyrzucanie -->
                 <div class="card-pile discard-pile" id="discard-pile" onclick="handleDiscardPileClick()"></div>
             </div>
 
@@ -239,9 +239,8 @@
                 
                 <div class="action-bar">
                     <button id="btn-sort" onclick="sortHand()">Sortuj</button>
-                    <!-- Przyciski straciły atrybut "disabled", logika kontrolowana jest przez JavaScript -->
-                    <button id="btn-meld" onclick="meldSelected()" style="background-color: #4caf50; color: white; opacity: 0.5;">Wyłóż (51+)</button>
-                    <button id="btn-discard" onclick="discardSelected()" style="background-color: #ef5350; color: white; opacity: 0.5;">Odrzuć</button>
+                    <button id="btn-meld" onclick="meldSelected()" disabled style="background-color: #4caf50; color: white; opacity: 0.5;">Wyłóż (51+)</button>
+                    <button id="btn-discard" onclick="discardSelected()" disabled style="background-color: #ef5350; color: white; opacity: 0.5;">Odrzuć</button>
                 </div>
 
                 <div class="hand-container">
@@ -256,9 +255,11 @@
                     Pokój: <span id="room-id-display" style="color:var(--gold);">---</span><br>
                     <span id="room-capacity" style="color: #aaa;"></span>
                 </div>
-                <button class="btn-small" id="copy-btn" onclick="copyInvite()" style="display:none;">Skopiuj Kod z Czatu</button>
+                <button class="btn-small" id="copy-btn" onclick="copyInvite()" style="display:none;">Skopiuj PIN z Czatu</button>
             </div>
-            <div id="chat-messages"></div>
+            <div id="chat-messages">
+                <div class="msg system">Porada: Aby odrzucić kartę, zaznacz ją i kliknij w stos na stole, albo użyj przycisku.</div>
+            </div>
             <div class="chat-input-area">
                 <input type="text" id="chat-input" placeholder="Wiadomość..." onkeypress="if(event.key==='Enter') sendMessage()">
                 <button onclick="sendMessage()">➤</button>
@@ -269,13 +270,13 @@
         <div id="waiting-screen" class="overlay-screen">
             <div class="score-board">
                 <h2 style="color:var(--gold); margin-top:0;">Oczekiwanie na graczy</h2>
-                <h1 style="letter-spacing: 5px; margin: 10px 0; font-size: 2.5em; color: white;" id="waiting-room-code">---</h1>
-                <button id="waiting-copy-btn" onclick="copyInvite()" style="margin-bottom: 20px; font-size: 1.2em; padding: 15px;">📋 Skopiuj Kod</button>
+                <h1 style="letter-spacing: 5px; margin: 10px 0; font-size: 3em; color: white;" id="waiting-room-code">---</h1>
+                <button id="waiting-copy-btn" onclick="copyInvite()" style="margin-bottom: 20px; font-size: 1.2em; padding: 15px;">📋 Skopiuj PIN</button>
                 
                 <div class="loader"></div>
                 <p id="waiting-text" style="font-weight:bold;">Podłączono graczy: 1 / ?</p>
-                <p style="font-size:0.8em; color:#aaa; margin-top: 15px;" id="waiting-subtext">Wyślij znajomym powyższy kod.</p>
-                <p style="font-size:0.8em; color:#4caf50;">Oczekiwanie włączone bez limitu czasu. <br>Gra po cichu łączy się ponownie nawet jak zgaśnie ekran.</p>
+                <p style="font-size:0.8em; color:#aaa; margin-top: 15px;" id="waiting-subtext">Podaj ten 4-cyfrowy PIN znajomym.</p>
+                <p style="font-size:0.8em; color:#4caf50;">Gra automatycznie łączy się ponownie, jeśli zgaśnie ekran.</p>
             </div>
         </div>
 
@@ -318,10 +319,8 @@
         let myTurnPhase = 'wait';
         let myIndex = -1;
         let selectedCards = [];
-
         let _connectedToHost = false;
 
-        // STARTUJ JAKO HOST
         function startGame() {
             roomMaxPlayers = parseInt(document.getElementById('playerCount').value);
             document.getElementById('my-name-label').innerText = `${playerName} (Twoje karty)`;
@@ -332,18 +331,17 @@
                     { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false },
                     { name: '🤖 Komputer', conn: null, hand: [], isBot: true, hasMelded: false }
                 ];
-                
                 showGameUI(currentRoom, "Tryb: Z Botem", false);
                 gameStatePhase = 'playing';
                 document.getElementById('waiting-screen').style.display = 'none';
                 startGameHost();
-                
             } else {
-                currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
+                // GENEROWANIE KRÓTKIEGO PINU (4 CYFRY) ZAMIAST 6 LITER
+                currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
                 document.getElementById('lobby').innerHTML = `<div class="lobby-box"><h1>Zakładanie serwera...</h1><div class="loader"></div></div>`;
                 
                 isHost = true;
-                peer = new Peer('mobtel-' + currentRoom.toLowerCase());
+                peer = new Peer('mobtel-' + currentRoom);
                 
                 peer.on('open', (id) => {
                     players = [ { name: playerName, conn: null, hand: [], isBot: false, hasMelded: false } ];
@@ -375,25 +373,24 @@
                 });
                 
                 peer.on('disconnected', () => { peer.reconnect(); });
-                
                 peer.on('error', (err) => { 
                     console.error(err);
                     if (err.type === 'unavailable-id') {
-                        alert("Kod uległ konfliktowi w sieci. Stwórz nowy.");
+                        alert("Ten PIN jest chwilowo zajęty. Przeładuj stronę by wylosować nowy.");
                         location.reload();
                     }
                 });
             }
         }
 
-        // DOŁĄCZ DO HOSTA
         function joinRoom() {
             let codeInput = document.getElementById('joinCode').value.trim();
             if (!codeInput) return;
             
             let match = codeInput.match(/KOD:\s*([A-Z0-9]+)/i) || codeInput.match(/TO:\s*([A-Z0-9]+)/i);
             let actualCode = match ? match[1] : codeInput;
-            actualCode = actualCode.substring(0, 6).toLowerCase();
+            // Obsługa wpisywania mniejszej ilości znaków i wyciągania samych cyfr
+            actualCode = actualCode.replace(/[^0-9a-zA-Z]/g, '').substring(0, 4).toLowerCase();
 
             document.getElementById('my-name-label').innerText = `${playerName} (Twoje karty)`;
             document.getElementById('lobby').innerHTML = `<div class="lobby-box"><h1>Szukanie Hosta...</h1><div class="loader"></div></div>`;
@@ -435,12 +432,11 @@
             });
 
             peer.on('error', (err) => {
-                alert("Nie można odnaleźć tego stołu.");
+                alert("Nie można odnaleźć tego stołu. Sprawdź PIN.");
                 location.reload();
             });
         }
 
-        // POKAZYWANIE UI
         function showGameUI(room, capTxt, showCopyBtn) {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
@@ -457,7 +453,6 @@
             });
         }
 
-        // HOSTA LOGIKA: ROZDANIE KART
         function startGameHost() {
             deck = []; discardPile = []; melds = [];
             for(let d=0; d<2; d++){
@@ -503,7 +498,6 @@
             else if(hostConn && _connectedToHost) hostConn.send(actionObj);
         }
 
-        // HOSTA LOGIKA: PRZETWARZANIE RUCHÓW
         function processAction(action, pIdx) {
             if (action.type === 'chat') { broadcastChat(players[pIdx].name, action.text); return; }
             if (pIdx !== turnIndex) return; 
@@ -530,12 +524,26 @@
                     let isClean = sel.every(c => !c.isJoker);
                     
                     if (!p.hasMelded && (pts < 51 || (!isClean && sel.length === 3))) {
-                        sendSystemMsg(pIdx, "Potrzebujesz min. 51 punktów i Czystego Sekwensu, żeby się wyłożyć.");
+                        sendSystemMsg(pIdx, "Najpierw musisz się wyłożyć - czysty sekwens i min. 51 punktów.");
                         return;
                     }
                     p.hand = p.hand.filter(c => !action.cardIds.includes(c.id));
                     melds.push(sel); p.hasMelded = true;
                     broadcastChat("System", `${p.name} wyłożył układ na stół.`);
+                    broadcastState();
+                    checkWin(pIdx);
+                }
+            }
+            else if (action.type === 'add_to_meld' && turnPhase === 'discard') {
+                if (!p.hasMelded) {
+                    sendSystemMsg(pIdx, "Zanim dołożysz kartę, musisz się poprawnie wyłożyć (51+ pkt).");
+                    return;
+                }
+                let sel = p.hand.filter(c => action.cardIds.includes(c.id));
+                if (sel.length > 0 && melds[action.meldIndex]) {
+                    p.hand = p.hand.filter(c => !action.cardIds.includes(c.id));
+                    melds[action.meldIndex].push(...sel);
+                    broadcastChat("System", `${p.name} dołożył kartę do układu na stole.`);
                     broadcastState();
                     checkWin(pIdx);
                 }
@@ -555,7 +563,6 @@
             }
         }
 
-        // APLIKACJA STANU GRY (ODŚWIEŻANIE WIZUALNE)
         function applyState(state) {
             myHand = state.myHand;
             myIndex = state.myIndex;
@@ -580,8 +587,9 @@
             const meldsArea = document.getElementById('melds-area');
             meldsArea.innerHTML = '';
             if(state.melds) {
-                state.melds.forEach(grp => {
+                state.melds.forEach((grp, idx) => {
                     let gDiv = document.createElement('div'); gDiv.className = 'meld-group';
+                    gDiv.onclick = function() { handleMeldClick(idx); };
                     grp.forEach(c => { gDiv.innerHTML += createCardHTML(c, ''); });
                     meldsArea.appendChild(gDiv);
                 });
@@ -636,83 +644,82 @@
             }
         }
 
-        // AKCJE GRACZA Z POPRAWIONYM ZAZNACZANIEM
+        function handleMeldClick(meldIdx) {
+            if (!myTurn) return;
+            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii!"); return; }
+            if (selectedCards.length === 0) { sysLog("Zaznacz kartę w ręce, żeby ją dołożyć do układu na stole."); return; }
+            
+            sendAction({type: 'add_to_meld', cardIds: selectedCards, meldIndex: meldIdx});
+            selectedCards = [];
+            updateActionButtons();
+        }
+
         function handleCardClick(el, id) {
-            // Zamiana miejsc
             if (!myTurn || myTurnPhase === 'draw') {
                 if(selectedCards.length === 1 && selectedCards[0] !== id) {
                     let idx1 = myHand.findIndex(c => c.id === selectedCards[0]);
                     let idx2 = myHand.findIndex(c => c.id === id);
                     [myHand[idx1], myHand[idx2]] = [myHand[idx2], myHand[idx1]];
-                    selectedCards = [];
-                    renderHand();
+                    selectedCards = []; renderHand();
                 } else {
-                    if(selectedCards.includes(id)) selectedCards = [];
-                    else selectedCards = [id];
+                    if(selectedCards.includes(id)) selectedCards = []; else selectedCards = [id];
                     renderHand();
                 }
                 return;
             }
             
-            // Faza odrzucania - zaznaczanie do akcji (wyłóż/odrzuć)
-            if (selectedCards.includes(id)) {
-                selectedCards = selectedCards.filter(c => c !== id);
-            } else {
-                selectedCards.push(id);
-            }
-            renderHand(); // Odrysowuje poprawnie nową listę zaznaczeń
-            updateActionButtons();
+            if (selectedCards.includes(id)) { selectedCards = selectedCards.filter(c => c !== id); } 
+            else { selectedCards.push(id); }
+            renderHand(); updateActionButtons();
         }
 
-        // Prawidłowe włączanie/wyłączanie przycisków w czasie rzeczywistym
         function updateActionButtons() {
             let bDisc = document.getElementById('btn-discard');
             let bMeld = document.getElementById('btn-meld');
             
             if (!myTurn || myTurnPhase === 'draw') { 
                 bDisc.style.opacity = '0.4'; bMeld.style.opacity = '0.4'; 
+                bDisc.disabled = true; bMeld.disabled = true;
                 return; 
             }
             
+            bDisc.disabled = (selectedCards.length !== 1);
             bDisc.style.opacity = (selectedCards.length === 1) ? '1' : '0.4';
+            bMeld.disabled = (selectedCards.length < 3);
             bMeld.style.opacity = (selectedCards.length >= 3) ? '1' : '0.4';
         }
 
-        // Zunifikowana funkcja kliknięcia w stos odrzuconych
         function handleDiscardPileClick() {
             if (!myTurn) { sysLog("Poczekaj na swoją kolej."); return; }
             if (myTurnPhase === 'draw') {
                 sendAction({type:'take_discard'}); myTurnPhase='wait'; updateActionButtons();
             } else if (myTurnPhase === 'discard') {
-                discardSelected(); // Jeśli zaznaczył 1 kartę, to funkcja to przepuści
+                discardSelected(); 
             }
         }
 
         function drawFromDeck() { 
             if(!myTurn) { sysLog("Poczekaj na swoją kolej."); return; }
-            if(myTurnPhase !== 'draw') { sysLog("Musisz teraz ułożyć sekwens albo odrzucić kartę na stos."); return; }
+            if(myTurnPhase !== 'draw') { sysLog("Już dobrałeś kartę. Wyłóż się lub odrzuć kartę na stos."); return; }
             sendAction({type:'draw'}); myTurnPhase='wait'; updateActionButtons(); 
         }
         
         function meldSelected() { 
-            if (!myTurn) { sysLog("Poczekaj na swoją turę!"); return; }
-            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii lub stosu!"); return; }
-            if (selectedCards.length < 3) { sysLog("Zaznacz minimum 3 karty z ręki, aby je wyłożyć."); return; }
+            if (!myTurn) { sysLog("To nie Twoja tura!"); return; }
+            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii!"); return; }
+            if (selectedCards.length < 3) { sysLog("Zaznacz min. 3 karty do wyłożenia."); return; }
             
             sendAction({type:'meld', cardIds: selectedCards}); 
-            selectedCards=[]; 
-            updateActionButtons(); 
+            selectedCards=[]; updateActionButtons(); 
         }
         
         function discardSelected() { 
-            if (!myTurn) { sysLog("Poczekaj na swoją turę!"); return; }
-            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii lub stosu!"); return; }
-            if (selectedCards.length !== 1) { sysLog("Musisz zaznaczyć tylko jedną kartę do wyrzucenia!"); return; }
+            if (!myTurn) { sysLog("To nie Twoja tura!"); return; }
+            if (myTurnPhase === 'draw') { sysLog("Najpierw dobierz kartę z talii!"); return; }
+            if (selectedCards.length !== 1) { sysLog("Wybierz 1 kartę, aby ją odrzucić i zakończyć turę."); return; }
             
             sendAction({type:'discard', cardId: selectedCards[0]}); 
-            selectedCards=[]; 
-            myTurnPhase='wait'; 
-            updateActionButtons(); 
+            selectedCards=[]; myTurnPhase='wait'; updateActionButtons(); 
         }
 
         function sortHand() {
@@ -721,9 +728,7 @@
                 if(a.suit === b.suit) return a.sVal - b.sVal;
                 return a.suit.localeCompare(b.suit);
             });
-            selectedCards = []; // Usuwa problem zawieszonych przycisków po posortowaniu
-            renderHand();
-            updateActionButtons();
+            selectedCards = []; renderHand(); updateActionButtons();
         }
 
         function recycleDiscard() {
@@ -740,7 +745,6 @@
             return false;
         }
 
-        // BOTA LOGIKA
         function doBotTurn() {
             let bot = players[turnIndex];
             broadcastChat("System", "🤖 Komputer myśli...");
@@ -759,7 +763,6 @@
             }, 1000);
         }
 
-        // CHAT I WYSWIETLANIE WYNIKÓW
         function broadcastEndGame(winTxt, scores) {
             let packet = { type: 'end', winnerText: winTxt, scores: scores };
             players.forEach((p, idx) => { if(idx === 0) showEndScreen(packet); else if(!p.isBot && p.conn) p.conn.send(packet); });
@@ -772,7 +775,7 @@
         }
 
         function copyInvite() {
-            let inviteText = `Dołącz do mojej gry w Mobtel Remik! Kod: ${currentRoom}`;
+            let inviteText = `Zagraj ze mną w Remika (stół na ${roomMaxPlayers} osób). PIN do gry: ${currentRoom}`;
             if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(inviteText).then(() => alert("Skopiowano kod!"));
             else { let t = document.createElement("input"); t.value = inviteText; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); alert("Skopiowano kod!"); }
         }
@@ -789,9 +792,7 @@
         }
         function addChat(sender, text, isError) {
             let box = document.getElementById('chat-messages');
-            if (sender === "System" && text.includes(playerName)) {
-                text = text.replace(playerName, "Ty");
-            }
+            if (sender === "System" && text.includes(playerName)) { text = text.replace(playerName, "Ty"); }
             box.innerHTML += `<div class="msg ${isError?'error':(sender==='System'?'system':'')}"><span class="sender">${sender === playerName ? 'Ty' : sender}:</span> ${text}</div>`;
             box.scrollTop = box.scrollHeight;
         }
